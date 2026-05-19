@@ -1,0 +1,10 @@
+model,method,best_cv_RMSE,best_cv_MAPE,best_cv_MAE,best_cv_R2,time_min,best_params
+XGBoost,Grid,7.0659468370480125,9.166325318170715,5.621853201729911,-0.25906311996437964,0.87,"{'n_estimators': 500, 'max_depth': 3, 'learning_rate': 0.01, 'subsample': 1.0}"
+XGBoost,Random,7.128723100361666,8.83164764940875,5.452832249232701,-0.28356712956850544,1.19,"{'n_estimators': 100, 'max_depth': 3, 'learning_rate': 0.1, 'subsample': 1.0}"
+XGBoost,Optuna,7.101799511818034,9.16880174308614,5.6323832920619425,-0.28101524074530526,1.14,"{'n_estimators': 500, 'max_depth': 3, 'learning_rate': 0.01, 'subsample': 0.85}"
+ANN,Grid,7.319933135168695,9.871351056841709,5.866123308454241,-0.4305325042392366,1.19,"{'hidden_layers': 2, 'units': 192, 'dropout': 0.2, 'learning_rate': 0.002, 'batch_size': 32}"
+ANN,Random,6.992050240503163,9.231228613243562,5.499960436139788,-0.3441958146380195,1.13,"{'hidden_layers': 2, 'units': 192, 'dropout': 0.2, 'learning_rate': 0.0018874053315616273, 'batch_size': 64}"
+ANN,Optuna,7.143564839615722,9.844885173208082,5.79687249319894,-0.4075103843827196,0.88,"{'hidden_layers': 2, 'units': 128, 'dropout': 0.1, 'learning_rate': 0.001960336986121068, 'batch_size': 16}"
+LSTM,Grid,7.592083652503176,9.708047325906827,6.018750447742675,-0.43717909505452945,2.31,"{'lookback': 14, 'units': 128, 'dropout': 0.3, 'learning_rate': 0.002, 'batch_size': 32}"
+LSTM,Random,7.836287431131618,11.114139341665538,6.647046690270047,-0.5579696322472796,2.18,"{'lookback': 14, 'units': 64, 'dropout': 0.1, 'learning_rate': 0.0006053383222993595, 'batch_size': 64}"
+LSTM,Optuna,7.5321052618579305,9.588480838746635,5.920531056031278,-0.36921805357475806,2.71,"{'lookback': 14, 'units': 128, 'dropout': 0.2, 'learning_rate': 0.002333481883618462, 'batch_size': 32}"
