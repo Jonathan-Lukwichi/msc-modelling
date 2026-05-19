@@ -146,21 +146,35 @@ benchmarked against their volatile-period numbers in §5.
 
 | Rank | Model | Family | Val MAPE % | Val MAE | Val RMSE | Val R² | Notes |
 |---|---|---|---|---|---|---|---|
-| 1 | **SARIMAX + LSTM (residual hybrid)** | hybrid_residual | **12.10** | **7.05** | **9.01** | **0.18** | Zhang Alg 6, LSTM refiner trained on SARIMAX residuals |
-| 2 | DoW mean | naive | 12.27 | 7.29 | 9.40 | 0.10 | Static day-of-week mean — competitive baseline |
-| 3 | SARIMAX | classical | 12.52 | 7.18 | 9.12 | 0.15 | (1,1,1)(0,1,1,7), AIC 6624.7, §5.2.5 exog block |
-| 4 | XGBoost | ml | 12.60 | 7.70 | 10.12 | -0.04 | Grid HPO, n_est=100, max_depth=3, lr=0.01 |
-| 5 | SARIMAX + XGBoost (residual hybrid) | hybrid_residual | 12.64 | 7.43 | 9.49 | 0.08 | Refiner trained on warmup-trimmed SARIMAX residuals |
-| 6 | NB GLM | parametric_glm | 12.65 | 7.76 | 9.79 | 0.02 | α = 1.42, headline parametric (§5.7) |
-| 7 | ARIMA | classical | 13.33 | 7.80 | 10.20 | -0.06 | (0,1,2), no exogenous |
-| 8 | ANN (MLP) | dl | 13.34 | 7.55 | 9.61 | 0.06 | 1 layer × 192 units, dropout 0.1 |
-| 9 | STL + ANN (hybrid) | hybrid_stl | 13.42 | 7.96 | 9.95 | -0.01 | Damped-linear trend + seasonal-naïve + ANN refiner |
-| 10 | STL + LSTM (hybrid) | hybrid_stl | 13.75 | 8.30 | 10.32 | -0.09 | Same recipe with LSTM refiner |
-| 11 | STL + XGBoost (hybrid) | hybrid_stl | 13.95 | 8.43 | 10.65 | -0.16 | Same recipe with XGBoost refiner |
-| 12 | LSTM | dl | *running* | | | | Optuna 30-trial TPE |
-| 13 | LSTM + XGBoost (residual hybrid) | hybrid_residual | *pending LSTM* | | | | |
+| 1 | **XGBoost** | ml | **12.02** | 7.09 | 9.39 | 0.10 | n_est=100, max_depth=3, lr=0.05, sub=1.0; k=10 inner CV |
+| 2 | **ANN (MLP)** | dl | **12.05** | 7.17 | 9.31 | 0.12 | 2 layer × 256 units, dropout 0.2, lr 4.8e-3; k=10 inner CV |
+| 3 | **SARIMAX + LSTM (residual hybrid)** | hybrid_residual | **12.10** | **7.05** | **9.01** | **0.18** | Zhang Alg 6; LSTM refiner on SARIMAX in-sample residuals |
+| 4 | DoW mean | naive | 12.27 | 7.29 | 9.40 | 0.10 | Static day-of-week mean — competitive baseline |
+| 5 | SARIMAX | classical | 12.52 | 7.18 | 9.12 | 0.15 | (1,1,1)(0,1,1,7), AIC 6624.7, §5.2.5 exog block |
+| 6 | SARIMAX + XGBoost | hybrid_residual | 12.64 | 7.43 | 9.49 | 0.08 | Refiner trained on warmup-trimmed SARIMAX residuals |
+| 7 | NB GLM | parametric_glm | 12.65 | 7.76 | 9.79 | 0.02 | α = 1.42, headline parametric (§5.7) |
+| 8 | LSTM | dl | 12.74 | 7.39 | 9.91 | 0.00 | lookback 14, 192 units, dropout 0.2; Optuna TPE 15 trials × 10 folds |
+| 9 | ARIMA | classical | 13.33 | 7.80 | 10.20 | -0.06 | (0,1,2), no exogenous |
+| 10 | STL + ANN | hybrid_stl | 13.42 | 7.96 | 9.95 | -0.01 | Damped-linear trend + seasonal-naïve + ANN refiner |
+| 11 | **LSTM + XGBoost** | hybrid_residual | **13.50** | 7.83 | 10.27 | -0.07 | **Hybrid is WORSE than the base LSTM** (12.74 → 13.50) — see §3bis |
+| 12 | STL + LSTM | hybrid_stl | 13.75 | 8.30 | 10.32 | -0.09 | STL + LSTM refiner |
+| 13 | STL + XGBoost | hybrid_stl | 13.95 | 8.43 | 10.65 | -0.16 | STL + XGBoost refiner |
 | 14 | Naïve seasonal (y_{t-7}) | naive | 16.38 | 9.68 | 12.23 | -0.52 | §6.1 floor |
 | 15 | Naïve (y_{t-1}) | naive | 16.97 | 10.09 | 13.45 | -0.84 | §6.1 floor |
+
+**Headline numbers, plain English:**
+
+- The **top three models** (XGBoost, ANN, SARIMAX+LSTM) are **within 0.08
+  percentage points** of each other. By any reasonable statistical-significance
+  test (Diebold-Mariano at α=0.05) these are operationally tied.
+- All 11 fitted models beat the two trivial naïve baselines.
+- The day-of-week mean (12.27 %) is **within ~0.25 pp of every top model** —
+  a strong endorsement of the calendar regularity in ED arrivals at Steve
+  Biko, and a sturdy fallback if the modelling pipeline ever goes offline.
+- **LSTM + XGBoost is the cautionary tale**: combining a 12.74 % LSTM with an
+  XGBoost refiner produced 13.50 % — *worse* than the base — confirming
+  Gafni-Pappas & Khan (2023)'s observation that the Zhang (2003) residual
+  hybrid does not guarantee improvement.
 
 **Sort order convention (Susnjak 2023 Table 5):** ascending by validation MAPE,
 with the best models at the top. Per-family colour coding in
@@ -388,6 +402,45 @@ consequence for Steve Biko ED.
 3. **The test block tells a different story** (§5 below). Every model's
    accuracy degrades when forecasting beyond the training distribution.
    The chapter discusses this as a regime change, not a model failure.
+
+---
+
+## 3ter. Deployment-ready model packages
+
+All 14 trained models are saved as `.pkl` files at
+`artefacts/models/deploy/`, with a `manifest.json` catalogue. A cloud app
+loads any model in three lines:
+
+```python
+from src.forecasting.deploy import load_model
+predictor = load_model("artefacts/models/deploy/xgboost.pkl")
+forecast = predictor.predict(X_future, history=y_history)
+```
+
+The deployment packages bundle: fitted model state, feature column names (in
+fitting order), feature scaler, target scaler (neural-net models), lookback
+(LSTM), best hyperparameters, training-fold metadata, and val metrics. PyTorch
+models reconstruct from `state_dict + class info` so the cloud needs only
+`src/forecasting/models/` on `PYTHONPATH`.
+
+The 14 packages, sorted by val MAPE:
+
+| File | Model | Val MAPE | Used by app for… |
+|---|---|---|---|
+| xgboost.pkl | XGBoost (k=10 CV) | 12.02 | Headline daily-total forecast |
+| ann.pkl | ANN (2×256) | 12.05 | DL fallback |
+| hybrid_sarimax_lstm.pkl | SARIMAX + LSTM | 12.10 | Best hybrid; richest prediction interval |
+| dow_mean.pkl | DoW mean | 12.27 | "Lights-out" fallback when model offline |
+| sarimax.pkl | SARIMAX | 12.52 | Interpretable parametric forecast |
+| hybrid_sarimax_xgb.pkl | SARIMAX + XGBoost | 12.64 | Alternative hybrid |
+| nbglm.pkl | NB GLM | 12.65 | Overdispersion-aware intervals |
+| lstm.pkl | LSTM | 12.74 | Sequence model for the dashboard |
+| arima.pkl | ARIMA | 13.33 | No-exogenous sanity check |
+| hybrid_stl_ann.pkl | STL + ANN | 13.42 | Decomposition-based ensemble |
+| hybrid_lstm_xgb.pkl | LSTM + XGBoost | 13.50 | (worse than base — keep for completeness) |
+| hybrid_stl_lstm.pkl | STL + LSTM | 13.75 | — |
+| hybrid_stl_xgb.pkl | STL + XGBoost | 13.95 | — |
+| naive_yest.pkl, naive_seasonal.pkl | Naïve floors | 16.38–16.97 | Smoke tests / sanity baselines |
 
 ---
 
