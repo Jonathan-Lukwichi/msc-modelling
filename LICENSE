@@ -1,0 +1,38 @@
+Copyright (c) 2026 Jonathan Lukwichi
+
+This repository accompanies an MSc thesis at the University of Pretoria,
+Department of Industrial and Systems Engineering.
+
+Academic Use Licence
+====================
+
+Permission is granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software") to use the
+Software for academic, research, and non-commercial educational purposes,
+subject to the following conditions:
+
+1. The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+
+2. Any publication, derivative work, or public presentation that uses or
+   builds upon the Software must cite the originating MSc thesis:
+
+       Lukwichi, J. (2026). Optimising Hospital Supply Chain Demand
+       Forecasting Using Machine Learning: A Case Study of Steve Biko
+       Academic Hospital Emergency Department. MSc Thesis, Department of
+       Industrial and Systems Engineering, University of Pretoria.
+
+3. Commercial use, redistribution, or productisation of the Software requires
+   prior written permission from the copyright holder.
+
+4. The Software is provided "AS IS", without warranty of any kind, express or
+   implied, including but not limited to the warranties of merchantability,
+   fitness for a particular purpose, and non-infringement. In no event shall
+   the author or copyright holders be liable for any claim, damages, or other
+   liability, whether in an action of contract, tort, or otherwise, arising
+   from, out of, or in connection with the Software or the use or other
+   dealings in the Software.
+
+5. The patient register data described in the thesis is NOT included in this
+   repository and is subject to a separate data-sharing agreement with Steve
+   Biko Academic Hospital and the National Department of Health, South Africa.

@@ -1,0 +1,67 @@
+# Task 2 per-specialty exogenous blocks, settled by Chapter 5 §5.3.3.
+# Surgery sign-reversal (+41% / +32% / +26%) and weekend-Orthopaedics (+16.5%)
+# rule out shared-coefficient multi-output models — each specialty fits its own.
+
+shared_calendar:
+  # All seven specialties include these (the §5.2.5 calendar binaries)
+  - is_weekend
+  - is_long_weekend
+  - is_public_holiday
+  - is_school_holiday
+  - is_festive_season
+  - is_winter_holiday
+  - is_near_holiday
+
+daily_specialties:
+  Medicine:
+    resolution: daily
+    mean_per_day: 41.85   # 73.3% of header
+    weather:
+      - temp_mean_C
+      - wind_max_kmh
+    interactions: []
+
+  Orthopaedics:
+    resolution: daily
+    mean_per_day: 9.77    # 17.1% of header
+    weather:
+      - temp_mean_C
+    interactions: []
+
+  Surgery:
+    resolution: daily
+    mean_per_day: 1.84    # ~3.2%
+    weather: []           # weather-flat per §5.3.3
+    # Sign-reversal columns: dedicated for the +41/+32/+26 calendar reversal
+    # so SARIMAX can fit these coefficients independently from Medicine-driven ones
+    interactions:
+      - is_weekend
+      - is_long_weekend
+      - is_public_holiday
+
+  Paediatrics:
+    resolution: daily
+    mean_per_day: 1.43
+    weather:
+      - wind_max_kmh
+    interactions: []
+
+  Gynaecology:
+    resolution: daily
+    mean_per_day: 1.43
+    weather: []           # weather-flat
+    interactions: []
+
+weekly_specialties:
+  Maternity:
+    resolution: weekly
+    mean_per_day: 0.15
+    weather:
+      - wind_max_kmh
+    seasonal_period: 52
+
+  Psychiatry:
+    resolution: weekly
+    mean_per_day: 0.10
+    weather: []
+    seasonal_period: 52

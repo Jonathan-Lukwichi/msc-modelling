@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+
+# Local secrets and overrides
+.env
+.env.*
+*.local.yaml
+configs/paths.local.yaml
+
+# -- Project-specific --
+# Large or sensitive data files we never commit
+data/raw/
+data/processed/
+data/external/
+
+# Trained model pickles and predictions regenerate from the scripts;
+# don't bloat the repo with them. Metrics, figures, tables are committed.
+artefacts/models/
+artefacts/predictions/
+
+# Background task outputs / temp files
+*.log
+*.tmp

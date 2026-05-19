@@ -1,0 +1,60 @@
+# Active model list and flags. Set `active: false` to skip a model in run scripts.
+
+global:
+  seed: 42
+
+baselines:
+  naive_yest:
+    active: true
+  naive_seasonal:
+    active: true
+  dow_mean:
+    active: true
+  arima:
+    active: true
+  sarima:
+    active: true                 # Gaussian likelihood, §5.7 time-series baseline
+  nbglm:
+    active: true                 # NB GLM regression, §5.7 headline parametric likelihood
+  nbglm_normal_sensitivity:
+    active: true                 # Normal-likelihood sensitivity, §5.2.1
+
+standalone_ml:
+  xgboost:
+    active: true
+  ann:
+    active: true
+  lstm:
+    active: true
+
+hybrids:
+  residual:
+    lstm_xgboost:
+      active: true
+    sarima_xgboost:
+      active: true
+    sarima_lstm:
+      active: true
+  stl:
+    stl_xgboost:
+      active: true
+    stl_ann:
+      active: true
+    stl_lstm:
+      active: true
+
+tasks:
+  task1_daily_total:
+    active: true
+  task2_specialty:
+    daily:
+      Medicine: true
+      Orthopaedics: true
+      Surgery: true
+      Paediatrics: true
+      Gynaecology: true
+    weekly:
+      Maternity: true
+      Psychiatry: true
+  layer2_hourly:
+    active: true

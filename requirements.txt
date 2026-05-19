@@ -1,0 +1,15 @@
+numpy>=2.0
+pandas>=2.0
+pyarrow
+scikit-learn>=1.5
+statsmodels>=0.14
+pmdarima>=2.0
+xgboost>=2.0
+optuna>=3.0
+pyyaml
+matplotlib
+seaborn
+joblib
+tqdm
+shap
+pytest

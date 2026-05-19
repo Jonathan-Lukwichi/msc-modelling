@@ -1,0 +1,35 @@
+# Task 1 (daily total) feature inventory, settled by Chapter 5 §5.2.5.
+# Used by SARIMAX, ARIMA-X, and NB GLM directly (no engineering, no consensus).
+# The downstream ML models (XGBoost / ANN / LSTM / hybrids) operate on the
+# engineered + consensus-selected feature set, NOT on this raw 10.
+
+target: total_daily_arrivals
+
+# Categorical (1)
+categorical:
+  - day_of_week        # 7 levels, encoded as 6 dummies (Mon as reference)
+
+# Continuous (2), standardised on train fold only
+continuous:
+  - temp_mean_C
+  - wind_max_kmh
+
+# Calendar binaries (7)
+binary:
+  - is_weekend
+  - is_long_weekend
+  - is_public_holiday
+  - is_school_holiday
+  - is_festive_season
+  - is_winter_holiday
+  - is_near_holiday
+
+# Exclusions from §5.2.5 (calendar effects significant in §5.2.3 but dropped from
+# the inventory; flagged only for operational interval widening, §5.5.2):
+explicitly_excluded:
+  - is_year_end
+  - is_year_start
+  - is_december
+  - is_day_before_holiday
+  - is_month_end_period
+  - year   # explicitly excluded per §5.2.5

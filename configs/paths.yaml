@@ -1,0 +1,41 @@
+# Path configuration for inputs and outputs.
+#
+# This is the TEMPLATE committed to git. Do NOT edit your real paths here.
+# Instead, copy this file to `configs/paths.local.yaml` and fill in your local
+# absolute paths there. `paths.local.yaml` is git-ignored and shadows this file
+# at load time (see src/forecasting/io.py:load_paths).
+#
+# The four input files (G1..G4) are produced by the upstream EDA pipeline
+# (Chapter 5 outputs). The five upstream_artefacts files are likewise produced
+# upstream and are loaded "as-is" by the modelling scripts.
+#
+# If you do not have the upstream artefacts, the engineering and consensus
+# scripts in this repository will regenerate them from G1.
+
+inputs:
+  # Joined modelling inputs — CSVs produced by the Chapter 5 EDA pipeline
+  g1_daily:           '<PATH_TO_DATAANALYSIS>/outAnalysis/pure/01_joined_daily_demand/G1_pure_daily_demand.csv'
+  g2_hourly:          '<PATH_TO_DATAANALYSIS>/outAnalysis/pure/02_joined_hourly_demand/G2_pure_hourly_demand.csv'
+  g3_clinical_daily:  '<PATH_TO_DATAANALYSIS>/outAnalysis/pure/03_joined_clinical_daily/G3_pure_clinical_daily.csv'
+  g4_clinical_hourly: '<PATH_TO_DATAANALYSIS>/outAnalysis/pure/04_joined_clinical_hourly/G4_pure_clinical_hourly.csv'
+
+upstream_artefacts:
+  # Pre-computed §3.4.2 + §3.4.3 results from the EDA pipeline
+  engineered_features:   '<PATH_TO_DATAANALYSIS>/outAnalysis/07_chapter3_alignment/feature_engineering/G1_fully_engineered.csv'
+  consensus_selection:   '<PATH_TO_DATAANALYSIS>/outAnalysis/07_chapter3_alignment/feature_selection/feature_selection_results.csv'
+  hourly_proportions:    '<PATH_TO_DATAANALYSIS>/outAnalysis/07_chapter3_alignment/temporal_disaggregation/hourly_proportion_curves.csv'
+  stl_components:        '<PATH_TO_DATAANALYSIS>/outAnalysis/07_chapter3_alignment/stl_components/stl_components.csv'
+  triangulated_features: '<PATH_TO_DATAANALYSIS>/outAnalysis/pure/01_joined_daily_demand/section_5_1_5_features/feature_ranking_triangulated.csv'
+
+outputs:
+  # Default to the repository's own artefacts/ subtree (relative paths)
+  models:      './artefacts/models'
+  predictions: './artefacts/predictions'
+  metrics:     './artefacts/metrics'
+  figures:     './artefacts/figures'
+  tables:      './artefacts/tables'
+  processed:   './data/processed'
+
+  # Optional: sync chapter figures to a LaTeX folder elsewhere on disk
+  # (typically your thesis source tree). Comment out if not needed.
+  latex_figures: '<PATH_TO_THESIS>/latex/figures/ch6'

@@ -1,0 +1,42 @@
+# Train/val/test split fixed by Chapter 5 §5.5.2.
+# These dates are settled and should not be changed.
+
+train:
+  start: '2022-03-01'
+  end: '2024-06-30'
+  expected_days: 853
+  mean: 58.4
+  sd: 13.7
+
+validation:
+  start: '2024-07-01'
+  end: '2024-12-31'
+  expected_days: 184
+  mean: 60.6
+  sd: 9.9
+
+test:
+  start: '2025-01-01'
+  end: '2026-01-31'
+  expected_days: 396
+  mean: 69.1
+  sd: 12.0
+
+# Excluded from training but retained for sensitivity analyses (§5.5.2)
+pre_covid:
+  start: '2019-05-01'
+  end: '2020-02-29'
+  expected_days: 302
+  mean: 57.1
+
+during_covid:
+  start: '2020-03-01'
+  end: '2022-03-31'
+  expected_days: 724
+  mean: 48.4
+
+# Distributional drift reference values (KS distances, §5.5.2)
+drift:
+  train_val_ks_d: 0.14
+  val_test_ks_d: 0.37
+  train_test_ks_d: 0.44
