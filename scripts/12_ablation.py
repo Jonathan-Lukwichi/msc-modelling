@@ -87,14 +87,29 @@ def _scenario_data(scenario: str, feature_kind: str = "consensus"):
         X_all, _ = build_task1_exogenous(g1, fit_scaler=True)  # 15 cols
     elif feature_kind == "all100":
         eng = load_engineered()
-        # All numeric engineered cols except the target and meta cols
-        drop = {"year", "month", "day", "day_of_year",
-                "arrival_normal_hours", "arrival_after_hours",
-                "patient_count", "patient_count_totals_raw",
-                "attendant_count", "is_zero_day"}
+        # ALL these columns are direct constituents or near-duplicates of the
+        # target total_daily_arrivals = arrival_normal_hours + arrival_after_hours.
+        # Dropping them is essential to avoid target leakage in this scenario.
+        drop = {
+            # Target itself + raw counts that compose it
+            "total_daily_arrivals", "patient_count", "patient_count_totals_raw",
+            "arrival_subtotal", "arrival_normal_hours", "arrival_after_hours",
+            "attendant_count",
+            # Triage subtotals (sum to the target)
+            "triage_nh_total", "triage_ah_total",
+            # Per-priority counts within normal/after hours (sum to the target)
+            "p1_normal_hours", "p2_normal_hours", "p3_normal_hours",
+            "p1_after_hours", "p2_after_hours", "p3_after_hours",
+            # Patient-flow counters tied to the daily total
+            "internal_transfer_in", "external_transfer_in",
+            "discharges_rht_abscond", "deaths_p4",
+            "internal_transfer_out", "external_transfer_out",
+            "carry_over_midnight", "transfer_in_subtotal", "separation_subtotal",
+            # Meta calendar columns we don't want as features
+            "year", "month", "day", "day_of_year", "is_zero_day",
+        }
         X_all = eng.drop(columns=[c for c in drop if c in eng.columns],
                           errors="ignore")
-        # Keep only numeric cols
         X_all = X_all.select_dtypes(include=[np.number])
     else:
         raise ValueError(feature_kind)
