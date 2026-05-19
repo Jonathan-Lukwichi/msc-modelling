@@ -626,6 +626,88 @@ Sort the design choices by validated impact:
 
 ---
 
+## 5ter. Ensemble study — does combining models break the 10 % wall?
+
+The Susnjak & Maddigan (2023) literature memo identified ensembling (their
+Voting + Stacking) as the single proven path to a substantial MAPE
+reduction. We built four ensembles over the top 8 base models (XGBoost, ANN,
+SARIMAX+LSTM, SARIMAX, SARIMAX+XGB, NB GLM, LSTM, DoW mean) and tested each
+on the val block. Source: [scripts/16_ensembles.py](scripts/16_ensembles.py).
+Figure: [fig_6_13_ensembles.png](artefacts/figures/fig_6_13_ensembles.png).
+
+### Results
+
+| Ensemble | Method | Val MAPE | Δ vs best base | Verdict |
+|---|---|---|---|---|
+| **E1c** | Simple mean of all 8 base preds | **11.80** | **−0.22 pp** | Best honest ensemble |
+| E2 | Weighted mean, weights = 1 / val_MAPE | 11.80 | −0.22 pp | Ties E1c (weights nearly uniform) |
+| E1 | Simple mean of top-3 | 11.85 | −0.17 pp | — |
+| E1b | Simple mean of top-5 | 11.88 | −0.14 pp | — |
+| **E3** | Optimal convex weights (val-fit, BIASED) | **11.66** | **−0.36 pp** | Theoretical upper bound |
+| E4 | Stacking Ridge (50% val trains, 50% evaluates) | 13.01 | **+0.99 pp** | Val too short for honest stacking |
+
+### Bottom line
+
+**Ensembling buys us 0.22 percentage points. It does not break 10 %.**
+
+Even the theoretical upper bound (E3 — convex weights fitted on the val set
+itself, which is optimistically biased) only reaches **11.66 %**. That is a
+hard ceiling: the best possible linear combination of these 8 models on the
+val period is still 1.7 pp above 10 %.
+
+### Why ensembling doesn't get us across the line
+
+The 8 base models all have val MAPE within 0.7 pp of each other (12.02–12.74 %).
+They predict essentially the **same signal** — day-of-week + holiday calendar —
+using different mathematical machinery. The E2 inverse-MAPE weights are nearly
+uniform (range 0.121–0.129) because no base model is clearly stronger than the
+others. Ensembling averages residual noise but **cannot create new signal**
+out of features the base models all share.
+
+The honest E4 stacking with Ridge meta-learner failed badly (13.01 %, worse
+than every base) because the 92-day val-train-half is too short for the meta
+to discover stable weights, and the 92-day val-test-half has somewhat different
+characteristics from the first half (calendar effects, weather).
+
+### The actual ceiling at this data + feature scale
+
+Combining the ablation, the ensemble study, and the literature shows the
+structural constraints:
+
+1. **All paths to ~12% MAPE converge.** Different architectures (tree, neural,
+   classical, parametric, hybrid) land within 0.7 pp of each other. The same
+   signal is being extracted by all of them.
+2. **The remaining 1.8–2.0 pp gap to 10 % is largely irreducible noise** at the
+   current data size (848 days) and feature inventory (calendar + weather).
+3. **The literature places us correctly.** Susnjak & Maddigan (2023) Table 1
+   reports best MAPEs of 6.5–12.3 % across 11 published daily-ED studies on
+   stable partitions; we are at the upper edge of this range with our 848-day
+   window. Their own best result on a volatile (COVID-disrupted) partition
+   was 18.4 % — we are markedly better than that on our val block (in-window)
+   and will benchmark against it on the OOD test block (§5).
+
+### How to actually break 10 % — the five real paths (revisited)
+
+These are the same five paths flagged in §6bis below, now updated with
+quantitative expectations:
+
+| Path | Realistic MAPE gain | Cost / scope |
+|---|---|---|
+| **(A) More training data** — wait 18 months for the post-COVID block to grow to ~4 years | Likely 2–4 pp gain to 8–10 % | Time |
+| **(B) Aggregate to weekly resolution** | Likely 6–9 pp gain to 3–6 % MAPE (Fan 2022 precedent) | Changes the operational use case |
+| **(C) Add external signals** — NICD surveillance, Google Trends "fever" / "ER", local event calendar | 0.5–2 pp gain (Susnjak 2023 attributes ~2 pp of their improvement to this) | New data pipelines |
+| **(D) Deeper ensembling** with bigger constituent variety — Prophet, CatBoost, transformer | 0.5–1.5 pp gain | More compute, more models to maintain |
+| **(E) Continuous online retraining** | Recovers the OOD drift on the test block (3–6 pp on test, see §5) | Deployment-time machinery |
+
+**For the chapter prose, my recommendation is to acknowledge the 12 % ceiling
+honestly and frame it as the noise floor of daily ED forecasting at this data
+scale, not as a model failure.** The Susnjak Table 1 cross-paper compilation
+gives the chapter strong cover: of 11 published daily-ED studies, the best
+MAPE values span 6.5–12.3 %, and we sit at the upper edge of that range with a
+shorter training window than most. The chapter should explicitly state this.
+
+---
+
 ## 6bis. Why our best model is at ~12 % MAPE and not below 10 %
 
 The Susnjak & Maddigan (2023) "excellent" threshold is 10 % MAPE. Our headline
