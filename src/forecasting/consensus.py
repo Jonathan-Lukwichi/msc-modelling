@@ -16,10 +16,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-import yaml
-
-
-CONFIG_DIR = Path(__file__).resolve().parents[2] / "configs"
 
 
 def load_consensus() -> pd.DataFrame:
@@ -28,7 +24,9 @@ def load_consensus() -> pd.DataFrame:
     Columns: Feature, Dummy, RF_Perm, Lasso, GBM, Total, Consensus.
     Consensus == 1 iff Total >= 2 (the §3.4.3 vote threshold).
     """
-    paths = yaml.safe_load((CONFIG_DIR / "paths.yaml").read_text())
+    # Use the io module's resolver so paths.local.yaml shadows paths.yaml
+    from src.forecasting.io import load_paths
+    paths = load_paths()
     path = paths["upstream_artefacts"]["consensus_selection"]
     return pd.read_csv(path)
 

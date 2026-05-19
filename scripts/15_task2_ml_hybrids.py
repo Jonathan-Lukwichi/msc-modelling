@@ -188,25 +188,61 @@ def fit_predict_xgb(X_train, y_train, X_val):
 # SARIMAX (refit per specialty, light auto_arima)
 # ---------------------------------------------------------------------------
 
-def fit_sarimax_share(y_train, X_train, X_val, X_full, val_idx):
-    """Fit SARIMAX once on train, return (val_pred, train_residuals, order, model)."""
-    from pmdarima import auto_arima
+def fit_sarimax_share(y_train, X_train, X_val, X_full, val_idx,
+                       specialty: str | None = None):
+    """Fit SARIMAX once on train, return (val_pred, train_residuals, order, model).
+
+    Order is cached per-specialty to artefacts/models/task2_sarimax_order_{specialty}.txt
+    so subsequent runs skip the ~20-minute auto_arima search.
+    """
+    from pmdarima import auto_arima, ARIMA as PmARIMA
     np.random.seed(42)
-    base = auto_arima(
-        y_train.values, X=X_train.values,
-        start_p=0, start_q=0, max_p=2, max_q=2,
-        max_P=2, max_Q=2, d=1, D=1, seasonal=True, m=7,
-        stepwise=True, suppress_warnings=True,
-        error_action="ignore", information_criterion="aic",
-        random_state=42,
-    )
+
+    cache_path = None
+    cached_order = None
+    if specialty is not None:
+        cache_path = (ROOT / "artefacts" / "models"
+                       / f"task2_sarimax_order_{specialty}.txt")
+        if cache_path.exists():
+            cfg = {}
+            for line in cache_path.read_text().strip().splitlines():
+                k, _, v = line.partition("=")
+                cfg[k.strip()] = v.strip()
+            if "order" in cfg and "seasonal_order" in cfg:
+                cached_order = (eval(cfg["order"]), eval(cfg["seasonal_order"]))
+                print(f"    (using cached SARIMAX order {cached_order[0]} x {cached_order[1]})")
+
+    if cached_order is not None:
+        order, seasonal_order = cached_order
+        base = PmARIMA(order=order, seasonal_order=seasonal_order,
+                        suppress_warnings=True)
+        base.fit(y_train.values, X=X_train.values)
+    else:
+        base = auto_arima(
+            y_train.values, X=X_train.values,
+            start_p=0, start_q=0, max_p=2, max_q=2,
+            max_P=2, max_Q=2, d=1, D=1, seasonal=True, m=7,
+            stepwise=True, suppress_warnings=True,
+            error_action="ignore", information_criterion="aic",
+            random_state=42,
+        )
+        if cache_path is not None:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            cache_path.write_text(
+                f"order={tuple(base.order)}\n"
+                f"seasonal_order={tuple(base.seasonal_order)}\n"
+                f"aic={base.aic():.4f}\n"
+            )
+
     # In-sample residuals (trim 30-day warmup per residual.py convention)
     fitted = base.predict_in_sample(X=X_train.values)
     resid = pd.Series(y_train.values - np.asarray(fitted), index=y_train.index,
                        name="residual").iloc[30:]
-    # Trim extreme residuals
+    # Drop NaN / inf and trim extreme residuals
+    resid = resid.replace([np.inf, -np.inf], np.nan).dropna()
     sigma = resid.std()
-    resid = resid[resid.abs() <= 5 * sigma]
+    if sigma > 0:
+        resid = resid[resid.abs() <= 5 * sigma]
     # Single-shot val forecast (no rolling — refiner correction smooths things)
     yhat = base.predict(n_periods=len(val_idx), X=X_val.values)
     val_pred = pd.Series(np.asarray(yhat), index=val_idx)
@@ -352,11 +388,12 @@ def run_specialty(g3: pd.DataFrame, splits: Splits, name: str, col: str) -> list
     print(f"\n=== Daily specialty: {name} ===")
     t0 = time.time()
 
+    # Share-of-header target; drop NaN AND infinity (division by zero)
     target_share = (g3[col] / g3["total_daily_arrivals"]).rename("share")
+    target_share = target_share.replace([np.inf, -np.inf], np.nan)
     train_idx_full = splits.slice(g3, "train").index
     val_idx_full = splits.slice(g3, "val").index
 
-    # Restrict to where share is finite
     share_train = target_share.loc[train_idx_full].dropna()
     share_val = target_share.loc[val_idx_full].dropna()
     train_idx = share_train.index
@@ -410,11 +447,11 @@ def run_specialty(g3: pd.DataFrame, splits: Splits, name: str, col: str) -> list
         print(f"  LSTM FAILED: {exc}")
         lstm_val = None
 
-    # SARIMAX (need fit for hybrids)
+    # SARIMAX (need fit for hybrids) — uses cached order if available
     print("  Fitting SARIMAX for hybrid base...")
     t1 = time.time()
     sarimax_val_pred, sarimax_resid, order_s, seasonal_s, base_model = fit_sarimax_share(
-        y_train, X_train, X_val, X_full, val_idx,
+        y_train, X_train, X_val, X_full, val_idx, specialty=name,
     )
     print(f"    SARIMAX{order_s}x{seasonal_s} ({time.time() - t1:.1f}s)")
 

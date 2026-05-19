@@ -290,8 +290,9 @@ def main() -> None:
     for name, col in DAILY_SPECIALTIES.items():
         print(f"\n=== Daily specialty: {name}  (G3 col: {col}) ===")
         t0 = time.time()
-        # Target: share-of-header
+        # Target: share-of-header (drop NaN AND infinity from division by zero)
         share = (g3[col] / g3["total_daily_arrivals"]).rename("share")
+        share = share.replace([np.inf, -np.inf], np.nan)
         share_train = share.loc[train_idx_full].dropna()
         share_val = share.loc[val_idx_full].dropna()
 

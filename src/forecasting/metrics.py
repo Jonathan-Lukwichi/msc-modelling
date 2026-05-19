@@ -30,14 +30,20 @@ def rmse(actual, predicted) -> float:
     return float(np.sqrt(np.mean((a - p) ** 2)))
 
 
-def mape(actual, predicted, eps: float = 1.0) -> float:
+def mape(actual, predicted, eps: float | None = None) -> float:
     """Mean Absolute Percentage Error in %.
 
     Healthcare convention: drop rows where actual < eps (these are usually
     zero-arrival days that survived filtering and inflate MAPE pathologically).
-    Default eps=1 keeps every non-zero day.
+
+    When eps is None (default), it is auto-set to 1% of the maximum actual
+    value, so the same function works for both daily counts (mean ~60) and
+    share targets in [0, 1] (mean ~0.5). Pass eps=0 to disable filtering.
     """
     a, p = _to_arrays(actual, predicted)
+    if eps is None:
+        # Auto: 1% of max |actual| -- adapts to count vs share scales
+        eps = max(1e-9, 0.01 * float(np.nanmax(np.abs(a))))
     mask = a >= eps
     if mask.sum() == 0:
         return float("nan")

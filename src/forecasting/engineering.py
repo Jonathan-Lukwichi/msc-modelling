@@ -16,10 +16,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-import yaml
-
-
-CONFIG_DIR = Path(__file__).resolve().parents[2] / "configs"
 
 
 def load_engineered() -> pd.DataFrame:
@@ -32,7 +28,10 @@ def load_engineered() -> pd.DataFrame:
       - rolling stats at windows 7/14/30
       - calendar binaries (23)
     """
-    paths = yaml.safe_load((CONFIG_DIR / "paths.yaml").read_text())
+    # Use the io module's resolver so paths.local.yaml shadows paths.yaml
+    # (avoids reading the sanitised placeholder paths committed to git).
+    from src.forecasting.io import load_paths
+    paths = load_paths()
     path = paths["upstream_artefacts"]["engineered_features"]
     df = pd.read_csv(path, parse_dates=["date"])
     df = df.sort_values("date").reset_index(drop=True).set_index("date")
