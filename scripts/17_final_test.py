@@ -70,101 +70,46 @@ def naive_baselines(target: pd.Series, test_idx: pd.DatetimeIndex,
     return out
 
 
+# Per Prompt 1: the four duplicate rolling_* loops below were folded into
+# the shared src.forecasting.rolling.RollingForecaster. These wrappers exist
+# only to preserve this script's local call sites and return Series indexed
+# by date (the legacy interface).
+
 def rolling_arima(target, test_idx, step=7):
     """Roll ARIMA(0,1,2) weekly across test."""
-    from pmdarima import ARIMA as PmARIMA
-    order = (0, 1, 2)
-    full = target.copy()
-    rows = []
-    origin_pos = full.index.get_loc(test_idx[0]) - 1
-    last_pos = full.index.get_loc(test_idx[-1])
-    while origin_pos < last_pos:
-        h = int(min(step, last_pos - origin_pos))
-        m = PmARIMA(order=order, suppress_warnings=True)
-        m.fit(full.iloc[: origin_pos + 1].values)
-        yhat = m.predict(n_periods=h)
-        for d, yp in zip(full.index[origin_pos + 1 : origin_pos + 1 + h], yhat):
-            rows.append({"date": d, "predicted": float(yp)})
-        origin_pos += step
-    return pd.DataFrame(rows).set_index("date")["predicted"]
+    from src.forecasting.models.arima import rolling_forecast
+    df = rolling_forecast(target, test_idx, order=(0, 1, 2), step_days=step)
+    return df.set_index("date")["predicted"]
 
 
 def rolling_sarimax(target, X_full, test_idx, step=7):
-    from pmdarima import ARIMA as PmARIMA
-    order, seasonal_order = (1, 1, 1), (0, 1, 1, 7)
-    full = target.copy()
-    rows = []
-    origin_pos = full.index.get_loc(test_idx[0]) - 1
-    last_pos = full.index.get_loc(test_idx[-1])
-    while origin_pos < last_pos:
-        h = int(min(step, last_pos - origin_pos))
-        y_tr = full.iloc[: origin_pos + 1]
-        X_tr = X_full.loc[y_tr.index]
-        X_fu = X_full.iloc[origin_pos + 1 : origin_pos + 1 + h]
-        m = PmARIMA(order=order, seasonal_order=seasonal_order,
-                    suppress_warnings=True)
-        m.fit(y_tr.values, X=X_tr.values)
-        yhat = m.predict(n_periods=h, X=X_fu.values)
-        for d, yp in zip(X_fu.index, yhat):
-            rows.append({"date": d, "predicted": float(yp)})
-        origin_pos += step
-    return pd.DataFrame(rows).set_index("date")["predicted"]
+    """Roll SARIMAX(1,1,1)(0,1,1)_7 weekly."""
+    from src.forecasting.models.sarimax import rolling_forecast
+    df = rolling_forecast(
+        target, X_full, test_idx,
+        order=(1, 1, 1), seasonal_order=(0, 1, 1, 7), step_days=step,
+    )
+    return df.set_index("date")["predicted"]
 
 
 def rolling_nbglm(target, X_full, test_idx, step=7):
-    """NB GLM with §5.2.5 exog + y_{t-7}; weekly refit."""
-    import statsmodels.api as sm
-    full_with_lag = pd.concat(
-        [target.rename("y"), X_full, target.shift(7).rename("y_lag7")], axis=1)
-    rows = []
-    origin_pos = target.index.get_loc(test_idx[0]) - 1
-    last_pos = target.index.get_loc(test_idx[-1])
-    while origin_pos < last_pos:
-        h = int(min(step, last_pos - origin_pos))
-        tr = full_with_lag.iloc[: origin_pos + 1].dropna()
-        y_tr = tr["y"].values
-        X_tr = sm.add_constant(tr.drop(columns=["y"]).values)
-        # Estimate alpha
-        pois = sm.GLM(y_tr, X_tr, family=sm.families.Poisson()).fit(
-            method="lbfgs", disp=0)
-        mu = pois.predict()
-        pearson = (y_tr - mu) / np.sqrt(np.maximum(mu, 1e-6))
-        alpha = max(float(np.sum(pearson ** 2) / max(len(y_tr) - X_tr.shape[1], 1) - 1.0), 0.05)
-        nb = sm.GLM(y_tr, X_tr, family=sm.families.NegativeBinomial(alpha=alpha)).fit(
-            method="lbfgs", disp=0)
-        future_idx = target.index[origin_pos + 1 : origin_pos + 1 + h]
-        Xf = full_with_lag.loc[future_idx].drop(columns=["y"]).values
-        Xfc = sm.add_constant(Xf, has_constant="add")
-        if Xfc.shape[1] != X_tr.shape[1]:
-            Xfc = np.column_stack([np.ones(len(Xf)), Xf])
-        yhat = nb.predict(Xfc)
-        for d, yp in zip(future_idx, yhat):
-            rows.append({"date": d, "predicted": float(yp)})
-        origin_pos += step
-    return pd.DataFrame(rows).set_index("date")["predicted"]
+    """NB GLM with Ch5 §5.2.5 exog + y_{t-7}; weekly refit."""
+    from src.forecasting.models.negbin import rolling_forecast
+    df = rolling_forecast(target, X_full, test_idx, step_days=step)
+    return df.set_index("date")["predicted"]
 
 
 def rolling_xgboost(target, X_full, test_idx, step=7):
-    """XGBoost with best params from CV; weekly refit."""
-    from xgboost import XGBRegressor
+    """XGBoost with best CV params; weekly refit."""
+    from src.forecasting.models.xgboost_m import rolling_forecast
     params = json.loads(
         (ROOT / "artefacts" / "models" / "xgboost_best_params.json").read_text())
     df = pd.concat([target.rename("y"), X_full], axis=1, join="inner").dropna()
-    rows = []
-    origin = df.index.get_loc(test_idx[0]) - 1
-    last_pos = df.index.get_loc(test_idx[-1])
-    while origin < last_pos:
-        h = int(min(step, last_pos - origin))
-        tr = df.iloc[: origin + 1]
-        future_idx = df.index[origin + 1 : origin + 1 + h]
-        m = XGBRegressor(**params, objective="reg:squarederror",
-                          random_state=42, verbosity=0, n_jobs=-1)
-        m.fit(tr.drop(columns=["y"]).values, tr["y"].values)
-        yhat = m.predict(df.loc[future_idx].drop(columns=["y"]).values)
-        for d, yp in zip(future_idx, yhat):
-            rows.append({"date": d, "predicted": float(yp)})
-        origin += step
-    return pd.DataFrame(rows).set_index("date")["predicted"]
+    out = rolling_forecast(
+        df.drop(columns=["y"]), df["y"], test_idx,
+        params=params, step_days=step, seed=42,
+    )
+    return out.set_index("date")["predicted"]
 
 
 # ---------------------------------------------------------------------------

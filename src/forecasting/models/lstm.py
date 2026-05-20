@@ -277,66 +277,48 @@ def rolling_forecast(
     params: dict,
     step_days: int = 7, seed: int = 42,
 ) -> pd.DataFrame:
-    """Rolling weekly refit on the LSTM."""
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
+    """Rolling weekly refit on the LSTM — thin wrapper over RollingForecaster."""
+    from src.forecasting.rolling import RollingForecaster, FoldPrediction
     lookback = params["lookback"]
 
-    origin_pos = y_full.index.get_loc(block_start) - 1
-    while origin_pos < y_full.index.get_loc(block_end):
-        n_remaining = y_full.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        X_train = X_full.iloc[: origin_pos + 1]
-        y_train = y_full.iloc[: origin_pos + 1]
-
-        mean = X_train.mean()
-        std = X_train.std(ddof=0).replace(0, 1.0)
+    def factory(X_train, y_train, sample_weight=None):
+        mean = X_train.mean(); std = X_train.std(ddof=0).replace(0, 1.0)
         Xtr = ((X_train - mean) / std).astype(np.float32).values
         y_mean, y_std = float(y_train.mean()), float(y_train.std(ddof=0))
         ytr = ((y_train - y_mean) / y_std).astype(np.float32).values
-
-        # Build train sequences
         Xtr_seq, ytr_seq = _build_sequences(Xtr, ytr, lookback)
-        # Hold last 28 train points for early stopping
         n_es = max(28, lookback + 7)
-        X_es_seq, y_es_seq = Xtr_seq[-n_es:], ytr_seq[-n_es:]
-        Xtr_seq = Xtr_seq[:-n_es]
-        ytr_seq = ytr_seq[:-n_es]
-
         _seed_everything(seed)
-        model, _ = _train_one(Xtr_seq, ytr_seq, X_es_seq, y_es_seq, params,
-                               max_epochs=50)
-
-        # Predict h days ahead step by step using sliding window of observed history
-        # For each future day, use lookback of (train tail + already-predicted future).
-        # We predict h <= 7 days using observed exog (no recursion needed for X);
-        # for y we use observed history (lag-7 is in the engineered features, but
-        # the LSTM uses the whole window, so we rely on observed exog).
-        X_future = X_full.iloc[origin_pos + 1 : origin_pos + 1 + h]
-        Xfu = ((X_future - mean) / std).astype(np.float32).values
-
-        # Sliding-window prediction: at each step the window is last `lookback`
-        # rows of (train + already-predicted future) for X; we use the most
-        # recent observed exog. The target prediction at each step is independent
-        # given the window.
-        full_X_seq = np.vstack([Xtr, Xfu])
-        preds_norm = []
+        model, _ = _train_one(
+            Xtr_seq[:-n_es], ytr_seq[:-n_es],
+            Xtr_seq[-n_es:], ytr_seq[-n_es:], params, max_epochs=50,
+        )
         model.eval()
-        with torch.no_grad():
-            for i in range(h):
-                window_start = len(Xtr) + i - lookback
-                if window_start < 0:
-                    # not enough history; pad with first row
-                    pad = np.tile(full_X_seq[0:1], (-window_start, 1))
-                    window = np.vstack([pad, full_X_seq[: len(Xtr) + i]])
-                else:
-                    window = full_X_seq[window_start : len(Xtr) + i]
-                window_t = torch.from_numpy(window[None, :, :])
-                preds_norm.append(float(model(window_t).item()))
-        yhat = np.array(preds_norm) * y_std + y_mean
-        for date, y_pred in zip(X_future.index, yhat):
-            rows.append({"date": date, "predicted": float(y_pred)})
-        origin_pos += step_days
 
-    return pd.DataFrame(rows)
+        class _Fitted:
+            def predict(self, X_future, h):
+                Xfu = ((X_future - mean) / std).astype(np.float32).values
+                full_X = np.vstack([Xtr, Xfu])
+                preds_norm = []
+                with torch.no_grad():
+                    for i in range(h):
+                        pos = len(Xtr) + i
+                        if pos - lookback < 0:
+                            pad = np.tile(full_X[0:1], (lookback - pos, 1))
+                            window = np.vstack([pad, full_X[:pos]])
+                        else:
+                            window = full_X[pos - lookback : pos]
+                        preds_norm.append(
+                            float(model(torch.from_numpy(window[None, :, :])).item())
+                        )
+                yhat = np.array(preds_norm) * y_std + y_mean
+                return FoldPrediction(yhat=np.asarray(yhat, dtype=float))
+
+        return _Fitted()
+
+    rf = RollingForecaster(
+        model_factory=factory,
+        step_days=step_days, horizon_days=step_days, min_train_days=lookback + 1,
+    )
+    out = rf.fit_predict(X=X_full, y=y_full, eval_index=block_index)
+    return out.reset_index().rename(columns={"yhat": "predicted"})[["date", "predicted"]]

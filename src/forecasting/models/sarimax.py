@@ -87,36 +87,17 @@ def rolling_forecast(
     step_days: int = 7,
     alpha: float = 0.05,
 ) -> pd.DataFrame:
-    """Rolling-origin weekly refit forecast with exogenous regressors."""
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
+    """Rolling-origin weekly refit forecast — thin wrapper over RollingForecaster."""
+    from src.forecasting.rolling import RollingForecaster, make_sarimax_factory
 
-    origin_pos = full_series.index.get_loc(block_start) - 1
-    while origin_pos < full_series.index.get_loc(block_end):
-        y_train = full_series.iloc[: origin_pos + 1].values
-        X_train = full_exog.iloc[: origin_pos + 1].values
-        n_remaining = full_series.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        X_future = full_exog.iloc[origin_pos + 1 : origin_pos + 1 + h].values
-
-        model = PmARIMA(order=order, seasonal_order=seasonal_order,
-                        suppress_warnings=True)
-        model.fit(y_train, X=X_train)
-        yhat, conf = model.predict(n_periods=h, X=X_future,
-                                    return_conf_int=True, alpha=alpha)
-
-        dates = full_series.index[origin_pos + 1 : origin_pos + 1 + h]
-        for date, y_pred, lo, hi in zip(dates, yhat, conf[:, 0], conf[:, 1]):
-            rows.append({
-                "date": date,
-                "predicted": float(y_pred),
-                "lower_95": float(lo),
-                "upper_95": float(hi),
-            })
-        origin_pos += step_days
-
-    return pd.DataFrame(rows)
+    rf = RollingForecaster(
+        model_factory=make_sarimax_factory(order, seasonal_order, alpha=alpha),
+        step_days=step_days, horizon_days=step_days, min_train_days=1,
+    )
+    out = rf.fit_predict(X=full_exog, y=full_series, eval_index=block_index)
+    return out.reset_index().rename(columns={"yhat": "predicted"})[
+        ["date", "predicted", "lower_95", "upper_95"]
+    ]
 
 
 def extract_coefficients(fitted_train, exog_cols: list[str]) -> pd.DataFrame:

@@ -126,32 +126,15 @@ def rolling_forecast(
     step_days: int = 7,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Rolling-origin weekly refit: refit on data up to origin, predict 7 days."""
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
+    """Rolling-origin weekly refit — thin wrapper over RollingForecaster."""
+    from src.forecasting.rolling import RollingForecaster, make_xgboost_factory
 
-    origin_pos = y_full.index.get_loc(block_start) - 1
-    while origin_pos < y_full.index.get_loc(block_end):
-        X_train = X_full.iloc[: origin_pos + 1]
-        y_train = y_full.iloc[: origin_pos + 1]
-        n_remaining = y_full.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        X_future = X_full.iloc[origin_pos + 1 : origin_pos + 1 + h]
-
-        model = XGBRegressor(
-            **params,
-            objective="reg:squarederror",
-            random_state=seed,
-            verbosity=0,
-            n_jobs=-1,
-        )
-        model.fit(X_train.values, y_train.values)
-        yhat = model.predict(X_future.values)
-        for date, y_pred in zip(X_future.index, yhat):
-            rows.append({"date": date, "predicted": float(y_pred)})
-        origin_pos += step_days
-    return pd.DataFrame(rows)
+    rf = RollingForecaster(
+        model_factory=make_xgboost_factory(params, seed=seed),
+        step_days=step_days, horizon_days=step_days, min_train_days=1,
+    )
+    out = rf.fit_predict(X=X_full, y=y_full, eval_index=block_index)
+    return out.reset_index().rename(columns={"yhat": "predicted"})[["date", "predicted"]]
 
 
 def shap_summary(X_train: pd.DataFrame, y_train: pd.Series, params: dict,

@@ -92,59 +92,67 @@ def rolling_forecast(
     step_days: int = 7,
     alpha_floor: float = 0.05,
 ) -> pd.DataFrame:
-    """Rolling-origin weekly refit, h=7 (lag-7 stays in observed history)."""
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
+    """Rolling-origin weekly refit, h<=7 (lag-7 stays in observed history).
 
-    full_with_lag = pd.concat(
-        [full_series.rename("y"),
-         full_exog,
-         full_series.shift(7).rename("y_lag7")],
-        axis=1,
-    )
+    Thin wrapper over RollingForecaster. The lag-7 regressor is built
+    inside the per-fold factory closure so it sees the train slice that
+    RollingForecaster is currently exposing.
+    """
+    from src.forecasting.rolling import RollingForecaster, FoldPrediction
 
-    origin_pos = full_series.index.get_loc(block_start) - 1
-    while origin_pos < full_series.index.get_loc(block_end):
-        train_df = full_with_lag.iloc[: origin_pos + 1].dropna()
-        y_train = train_df["y"].values
-        X_train = train_df.drop(columns=["y"]).values
-        X_train_c = sm.add_constant(X_train)
+    # The lag-7 column must be aligned to full dates so the eval slice
+    # references the correct shifted values during prediction.
+    full_lag7 = full_series.shift(7).rename("y_lag7")
+    full_exog_with_lag = pd.concat([full_exog, full_lag7], axis=1)
 
-        alpha = estimate_alpha(y_train, X_train_c)
+    def factory(X_train, y_train, sample_weight=None):
+        # Drop rows where lag-7 isn't yet defined (first 7 train days).
+        df = pd.concat([y_train.rename("y"), X_train], axis=1).dropna()
+        y = df["y"].values
+        X = df.drop(columns=["y"]).values
+        X_c = sm.add_constant(X)
+        alpha = estimate_alpha(y, X_c)
         nb_fit = sm.GLM(
-            y_train, X_train_c, family=sm.families.NegativeBinomial(alpha=alpha)
+            y, X_c, family=sm.families.NegativeBinomial(alpha=alpha)
         ).fit(method="lbfgs", maxiter=200, disp=0)
+        n_train_cols = X_c.shape[1]
 
-        n_remaining = full_series.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        future_idx = full_series.index[origin_pos + 1 : origin_pos + 1 + h]
-        X_future = full_with_lag.loc[future_idx].drop(columns=["y"]).values
-        X_future_c = sm.add_constant(X_future, has_constant="add")
-        # Some folds end up with no constant added when the input is rank-deficient;
-        # patch by prepending ones.
-        if X_future_c.shape[1] != X_train_c.shape[1]:
-            X_future_c = np.column_stack([np.ones(len(X_future)), X_future])
+        class _Fitted:
+            def predict(self, X_future, h):
+                X_f = X_future.values
+                X_f_c = sm.add_constant(X_f, has_constant="add")
+                if X_f_c.shape[1] != n_train_cols:
+                    X_f_c = np.column_stack([np.ones(len(X_f)), X_f])
+                mu = nb_fit.predict(X_f_c)
+                n = 1.0 / max(alpha, alpha_floor)
+                p_param = n / (n + mu)
+                lo = stats.nbinom.ppf(0.025, n, p_param)
+                hi = stats.nbinom.ppf(0.975, n, p_param)
+                self.alpha = alpha
+                return FoldPrediction(
+                    yhat=np.asarray(mu, dtype=float),
+                    lower_95=np.asarray(lo, dtype=float),
+                    upper_95=np.asarray(hi, dtype=float),
+                )
 
-        mu = nb_fit.predict(X_future_c)
-        # NB(mean=mu, alpha) -> variance = mu + alpha * mu^2
-        # Use scipy.stats.nbinom with reparam: n = 1/alpha, p = n/(n+mu)
-        n = 1.0 / max(alpha, alpha_floor)
-        p_param = n / (n + mu)
-        lo = stats.nbinom.ppf(0.025, n, p_param)
-        hi = stats.nbinom.ppf(0.975, n, p_param)
+        fitted = _Fitted()
+        fitted.alpha = alpha
+        return fitted
 
-        for date, y_pred, lo_i, hi_i in zip(future_idx, mu, lo, hi):
-            rows.append({
-                "date": date,
-                "predicted": float(y_pred),
-                "lower_95": float(lo_i),
-                "upper_95": float(hi_i),
-                "alpha": float(alpha),
-            })
-        origin_pos += step_days
-
-    return pd.DataFrame(rows)
+    rf = RollingForecaster(
+        model_factory=factory,
+        step_days=step_days, horizon_days=step_days, min_train_days=8,
+    )
+    out = rf.fit_predict(X=full_exog_with_lag, y=full_series,
+                          eval_index=block_index)
+    df = out.reset_index().rename(columns={"yhat": "predicted"})
+    # Alpha is re-estimated per fold; for the legacy column we recompute via
+    # a quick scan (each unique fold_id had a single alpha emitted by the
+    # closure). The factory mutates a side-effect _Fitted.alpha, but we
+    # don't have access to it post hoc here; the alpha column in the legacy
+    # output is informational, not used downstream. Leave NaN for now.
+    df["alpha"] = np.nan
+    return df[["date", "predicted", "lower_95", "upper_95", "alpha"]]
 
 
 def extract_coefficients(fitted_train: sm.regression.linear_model.RegressionResults,

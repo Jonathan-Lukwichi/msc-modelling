@@ -69,34 +69,19 @@ def rolling_forecast(
     step_days: int = 7,
     alpha: float = 0.05,
 ) -> pd.DataFrame:
-    """Rolling-origin weekly refit forecast.
+    """Rolling-origin weekly refit forecast — thin wrapper over RollingForecaster.
 
-    For each origin t in block_index spaced by step_days, refit ARIMA(order)
-    on full_series up to t-1 and forecast the next step_days days.
+    Backward-compatible signature and output schema. The shared iteration
+    logic lives in src.forecasting.rolling.RollingForecaster (Prompt 1).
     """
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
+    from src.forecasting.rolling import RollingForecaster, make_arima_factory
 
-    # Origin = the last training day; forecast covers origin+1 .. origin+step.
-    # First origin is the day before block_start.
-    origin_pos = full_series.index.get_loc(block_start) - 1
-    while origin_pos < full_series.index.get_loc(block_end):
-        train_through = full_series.iloc[: origin_pos + 1]
-        n_remaining = full_series.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        model = ARIMA(order=order, suppress_warnings=True)
-        model.fit(train_through.values)
-        yhat, conf = model.predict(n_periods=h, return_conf_int=True, alpha=alpha)
-        dates = full_series.index[origin_pos + 1 : origin_pos + 1 + h]
-        for date, y_pred, lo, hi in zip(dates, yhat, conf[:, 0], conf[:, 1]):
-            rows.append({
-                "date": date,
-                "predicted": float(y_pred),
-                "lower_95": float(lo),
-                "upper_95": float(hi),
-            })
-        origin_pos += step_days
-
-    df = pd.DataFrame(rows)
-    return df
+    rf = RollingForecaster(
+        model_factory=make_arima_factory(order=order, alpha=alpha),
+        step_days=step_days, horizon_days=step_days,
+        min_train_days=1,  # ARIMA only needs one prior observation
+    )
+    out = rf.fit_predict(X=None, y=full_series, eval_index=block_index)
+    return out.reset_index().rename(columns={"yhat": "predicted"})[
+        ["date", "predicted", "lower_95", "upper_95"]
+    ]

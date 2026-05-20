@@ -255,46 +255,39 @@ def rolling_forecast(
     step_days: int = 7,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Rolling weekly refit. ANN refit at each origin is cheap on small data."""
-    rows = []
-    block_start = block_index[0]
-    block_end = block_index[-1]
-    origin_pos = y_full.index.get_loc(block_start) - 1
-    while origin_pos < y_full.index.get_loc(block_end):
-        n_remaining = y_full.index.get_loc(block_end) - origin_pos
-        h = int(min(step_days, n_remaining))
-        X_train = X_full.iloc[: origin_pos + 1]
-        y_train = y_full.iloc[: origin_pos + 1]
-        X_future = X_full.iloc[origin_pos + 1 : origin_pos + 1 + h]
+    """Rolling weekly refit — thin wrapper over RollingForecaster."""
+    from src.forecasting.rolling import RollingForecaster, FoldPrediction
 
-        mean = X_train.mean()
-        std = X_train.std(ddof=0).replace(0, 1.0)
+    def factory(X_train, y_train, sample_weight=None):
+        mean = X_train.mean(); std = X_train.std(ddof=0).replace(0, 1.0)
         Xtr = ((X_train - mean) / std).astype(np.float32)
-        Xfu = ((X_future - mean) / std).astype(np.float32)
         y_mean, y_std = float(y_train.mean()), float(y_train.std(ddof=0))
         ytr = ((y_train - y_mean) / y_std).astype(np.float32)
-
         X_train_t = torch.from_numpy(Xtr.values)
         y_train_t = torch.from_numpy(ytr.values)
-        X_future_t = torch.from_numpy(Xfu.values)
-
-        # Use a small validation slice from the tail of train for early stopping
         n_es = min(28, len(X_train_t) // 6)
-        X_es = X_train_t[-n_es:]
-        y_es = y_train_t[-n_es:]
-        X_train_t = X_train_t[:-n_es]
-        y_train_t = y_train_t[:-n_es]
-
+        X_es_t, y_es_t = X_train_t[-n_es:], y_train_t[-n_es:]
+        X_train_t, y_train_t = X_train_t[:-n_es], y_train_t[:-n_es]
         _seed_everything(seed)
         model, _, _ = _train_one(
-            X_train_t, y_train_t, X_es, y_es,
+            X_train_t, y_train_t, X_es_t, y_es_t,
             {**params, "seed": seed}, max_epochs=120,
         )
         model.eval()
-        with torch.no_grad():
-            yhat_norm = model(X_future_t).numpy()
-        yhat = yhat_norm * y_std + y_mean
-        for date, y_pred in zip(X_future.index, yhat):
-            rows.append({"date": date, "predicted": float(y_pred)})
-        origin_pos += step_days
-    return pd.DataFrame(rows)
+
+        class _Fitted:
+            def predict(self, X_future, h):
+                Xfu = ((X_future - mean) / std).astype(np.float32)
+                with torch.no_grad():
+                    yhat_norm = model(torch.from_numpy(Xfu.values)).numpy()
+                yhat = yhat_norm * y_std + y_mean
+                return FoldPrediction(yhat=np.asarray(yhat, dtype=float))
+
+        return _Fitted()
+
+    rf = RollingForecaster(
+        model_factory=factory,
+        step_days=step_days, horizon_days=step_days, min_train_days=1,
+    )
+    out = rf.fit_predict(X=X_full, y=y_full, eval_index=block_index)
+    return out.reset_index().rename(columns={"yhat": "predicted"})[["date", "predicted"]]
