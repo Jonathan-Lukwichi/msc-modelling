@@ -188,9 +188,22 @@ class OOFResidualHybrid:
         self,
         X_eval: pd.DataFrame,
         eval_index: pd.DatetimeIndex,
+        y_eval: Optional[pd.Series] = None,
     ) -> pd.DataFrame:
         """Return DataFrame indexed by eval dates with columns:
             base_yhat, refiner_pred, predicted (= base + refiner correction)
+
+        Parameters
+        ----------
+        X_eval : exogenous features over the eval block.
+        eval_index : dates to forecast.
+        y_eval : observed targets over the eval block, required for the
+            weekly rolling refit of the base model (the refit at origin
+            t > end_of_train consumes y observed up to t). In a true
+            production deployment these are the values that have just
+            been logged as the new week began. Passing None falls back
+            to a zero-imputed series, which is only valid if the eval
+            block is at most ``self.horizon`` days long.
         """
         if self._refiner is None:
             raise RuntimeError("fit() must be called before predict().")
@@ -203,14 +216,20 @@ class OOFResidualHybrid:
                 lambda df: ~df.index.duplicated(keep="first")
             ]
         y_full = self._y_train
-        # The base needs y_full to extend through eval_index too; we don't
-        # have y_eval truth, but rolling refit only USES y up to origin.
-        # Pad y_full with NaN at eval dates so RollingForecaster can index
-        # the eval dates correctly without needing their values.
-        missing_dates = eval_index.difference(y_full.index)
-        if len(missing_dates):
-            pad = pd.Series(np.nan, index=missing_dates)
-            y_full = pd.concat([y_full, pad]).sort_index()
+        # Splice in observed y over the eval block when provided. Without
+        # this the rolling refit sees NaNs once origin enters eval, which
+        # silently corrupts every parametric base (SARIMAX, ARIMA) and
+        # cascades catastrophically -- the bug surfaced during the
+        # OOF hybrid orchestrator run on 2026-05-21.
+        if y_eval is not None:
+            y_full = pd.concat([y_full, y_eval.loc[eval_index]]).loc[
+                lambda s: ~s.index.duplicated(keep="last")
+            ].sort_index()
+        else:
+            missing_dates = eval_index.difference(y_full.index)
+            if len(missing_dates):
+                pad = pd.Series(0.0, index=missing_dates)
+                y_full = pd.concat([y_full, pad]).sort_index()
 
         rf = RollingForecaster(
             model_factory=self.base_factory,

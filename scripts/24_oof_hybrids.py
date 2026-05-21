@@ -132,7 +132,10 @@ def main() -> None:
         # Re-fit the hybrid each origin happens inside RollingForecaster,
         # which OOFResidualHybrid.predict() invokes. The refiner is fixed
         # after fit().
-        out = hybrid.predict(X_cons.loc[blk_idx], blk_idx)
+        out = hybrid.predict(
+            X_cons.loc[blk_idx], blk_idx,
+            y_eval=target.loc[blk_idx],
+        )
         out["actual"] = target.loc[blk_idx].values
         s = score(out["actual"], out["predicted"])
         print(f"  {block_name} ({time.time() - t0:.0f}s):  MAPE={s['MAPE']:.3f}  "
