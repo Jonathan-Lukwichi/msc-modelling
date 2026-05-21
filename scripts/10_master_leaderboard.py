@@ -349,6 +349,38 @@ def main() -> None:
     lb.to_csv(out_long, index=False)
     print(f"\nWrote: {out_long.relative_to(ROOT)}")
 
+    # --- Prompt 2: also write the canonical parquet leaderboard ----------
+    try:
+        from src.forecasting.leaderboard import append_row, family_of
+
+        parquet_path = ROOT / "artefacts" / "leaderboard_canonical.parquet"
+        # Long form has columns: model, block, MAPE, MAE, RMSE, R2, ...
+        # Pivot to (model -> val/test dicts) and append one row per model.
+        for model in lb["model"].drop_duplicates():
+            sub = lb[lb["model"] == model]
+            val_row = sub[sub["block"] == "val"]
+            test_row = sub[sub["block"] == "test"]
+            vm = (
+                {"MAPE": float(val_row["MAPE"].iloc[0]),
+                 "RMSE": float(val_row["RMSE"].iloc[0])}
+                if not val_row.empty else None
+            )
+            tm = (
+                {"MAPE": float(test_row["MAPE"].iloc[0]),
+                 "RMSE": float(test_row["RMSE"].iloc[0])}
+                if not test_row.empty else None
+            )
+            append_row(
+                parquet_path, model=str(model),
+                family=family_of(str(model)),
+                criterion="mape",
+                val_metrics=vm, test_metrics=tm,
+                source_csv="artefacts/tables/leaderboard_task1.csv",
+            )
+        print(f"Wrote: {parquet_path.relative_to(ROOT)}")
+    except Exception as exc:
+        print(f"  parquet leaderboard append skipped: {exc}")
+
     # Wide-form Susnjak-style table
     val = lb[lb["block"] == "val"].set_index("model")[["pretty", "family",
                                                          "MAPE", "MAE",

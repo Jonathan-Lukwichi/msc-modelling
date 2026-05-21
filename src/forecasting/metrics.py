@@ -69,6 +69,95 @@ def score(actual, predicted) -> dict[str, float]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Added by Prompt 2: scale-free + prediction-interval metrics
+# ---------------------------------------------------------------------------
+
+def mase(actual, predicted, y_train, seasonality: int = 7) -> float:
+    """Mean Absolute Scaled Error (Hyndman & Koehler 2006, IJF 22(4):679-688).
+
+    MASE = mean(|y - yhat|) / mean(|y_t - y_{t-m}|) computed on the training
+    set. By construction MASE = 1 means parity with the seasonal naive
+    forecast; <1 beats naive, >1 is worse than naive.
+
+    The training-series denominator is the scale-free trick that makes MASE
+    well-defined even when the actual series contains zeros (unlike MAPE).
+    """
+    a, p = _to_arrays(actual, predicted)
+    y_tr = np.asarray(y_train, dtype=float).ravel()
+    if len(y_tr) <= seasonality:
+        raise ValueError(
+            f"y_train has length {len(y_tr)} but seasonality={seasonality}; "
+            "need at least seasonality + 1 train points."
+        )
+    diffs = np.abs(y_tr[seasonality:] - y_tr[:-seasonality])
+    denom = float(np.mean(diffs))
+    if denom == 0:
+        return float("nan")
+    return float(np.mean(np.abs(a - p)) / denom)
+
+
+def coverage(actual, lower, upper) -> float:
+    """Empirical interval coverage: fraction of actuals inside [lower, upper]."""
+    a = np.asarray(actual, dtype=float).ravel()
+    lo = np.asarray(lower, dtype=float).ravel()
+    hi = np.asarray(upper, dtype=float).ravel()
+    if not (a.shape == lo.shape == hi.shape):
+        raise ValueError(
+            f"shape mismatch: actual {a.shape}, lower {lo.shape}, upper {hi.shape}"
+        )
+    return float(np.mean((a >= lo) & (a <= hi)))
+
+
+def winkler_score(actual, lower, upper, alpha: float) -> float:
+    """Winkler (1972) score for prediction intervals at nominal level (1 - alpha).
+
+    Defined per observation as:
+        width                              if lower <= y <= upper
+        width + (2/alpha) * (lower - y)    if y < lower
+        width + (2/alpha) * (y - upper)    if y > upper
+    Lower is better. Penalises both wide intervals and uncovered points.
+    Returned value is the mean across observations.
+
+    Reference: Winkler, R. L. (1972). "A decision-theoretic approach to
+    interval estimation." JASA 67(337):187-191. Re-derived in the M4
+    forecasting competition (Makridakis, Spiliotis & Assimakopoulos 2020).
+    """
+    if not (0 < alpha < 1):
+        raise ValueError(f"alpha must be in (0, 1); got {alpha}")
+    a = np.asarray(actual, dtype=float).ravel()
+    lo = np.asarray(lower, dtype=float).ravel()
+    hi = np.asarray(upper, dtype=float).ravel()
+    if not (a.shape == lo.shape == hi.shape):
+        raise ValueError(
+            f"shape mismatch: actual {a.shape}, lower {lo.shape}, upper {hi.shape}"
+        )
+    width = hi - lo
+    penalty = np.where(
+        a < lo, (2.0 / alpha) * (lo - a),
+        np.where(a > hi, (2.0 / alpha) * (a - hi), 0.0),
+    )
+    return float(np.mean(width + penalty))
+
+
+def per_horizon_metrics(df: pd.DataFrame,
+                          horizon_col: str = "horizon") -> pd.DataFrame:
+    """Compute MAPE/MAE/RMSE/R2 for each value in df[horizon_col].
+
+    Expects columns 'actual' and 'predicted' in df.
+    """
+    if not {"actual", "predicted", horizon_col}.issubset(df.columns):
+        raise ValueError(
+            f"df must have columns 'actual', 'predicted', {horizon_col!r}; "
+            f"got {list(df.columns)}"
+        )
+    rows = []
+    for h, sub in df.groupby(horizon_col):
+        s = score(sub["actual"], sub["predicted"])
+        rows.append({"horizon": int(h), "n": len(sub), **s})
+    return pd.DataFrame(rows).sort_values("horizon").reset_index(drop=True)
+
+
 def score_per_horizon(
     actual: pd.Series,
     predicted: pd.Series,
