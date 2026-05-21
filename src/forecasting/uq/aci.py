@@ -141,14 +141,16 @@ def aci_intervals_mapie(
     semantics are equivalent though MAPIE's gamma is also tunable.
     """
     try:
-        # MAPIE expects a scikit-learn-compatible estimator; we cheat by
-        # wrapping the precomputed yhat in a fake "model" so MAPIE only
-        # uses its conformal machinery, not a refit. As of mapie>=0.8
-        # this is supported via `MapieTimeSeriesRegressor` with
-        # `method="aci"` -- but the API has shifted across releases, so
-        # we keep the reference path as primary and only delegate when
-        # the user is on a known-compatible version.
-        from mapie.regression import MapieTimeSeriesRegressor  # noqa: F401
+        # MAPIE 1.x renamed MapieTimeSeriesRegressor -> TimeSeriesRegressor.
+        # Both signatures use method="aci" for Gibbs-Candes (2021) /
+        # Zaffran et al. (2022). We accept either class name to stay
+        # compatible across the 0.8 -> 1.4 release boundary.
+        try:
+            from mapie.regression import TimeSeriesRegressor  # noqa: F401
+        except ImportError:
+            from mapie.regression import (  # noqa: F401
+                MapieTimeSeriesRegressor as TimeSeriesRegressor,
+            )
     except ImportError:
         return aci_intervals(
             y_eval=y_eval, yhat_eval=yhat_eval,
