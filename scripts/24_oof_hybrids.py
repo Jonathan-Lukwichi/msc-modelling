@@ -89,10 +89,22 @@ def main() -> None:
         order=SARIMAX_ORDER, seasonal_order=SARIMAX_SEASONAL,
     )
 
+    class _SarimaxOnRaw10:
+        """Wraps a fitted SARIMAX so .predict() looks up raw-10 X by date,
+        regardless of which X RollingForecaster hands it."""
+        def __init__(self, inner_fitted):
+            self.inner = inner_fitted
+
+        def predict(self, X_future, h):
+            # X_future may be the consensus-23 frame; replace with raw-10
+            # aligned to the same dates.
+            raw10 = X_full_sarimax.loc[X_future.index]
+            return self.inner.predict(raw10, h)
+
     def sarimax_factory_swapped(X_train_consensus, y_train, sample_weight=None):
-        # Replace the consensus X with the raw-10 X for SARIMAX fitting.
         X_train_raw10 = X_full_sarimax.loc[y_train.index]
-        return sarimax_factory_raw(X_train_raw10, y_train, sample_weight)
+        inner = sarimax_factory_raw(X_train_raw10, y_train, sample_weight)
+        return _SarimaxOnRaw10(inner)
 
     # Build the hybrid.
     hybrid = OOFResidualHybrid(
