@@ -126,11 +126,18 @@ def append_row(
     if len(existing) > 0:
         mask = (existing["model"] == model) & (existing["criterion"] == criterion)
         existing = existing[~mask].copy()
-    combined = pd.concat([existing, new_row], ignore_index=True)
+    # Avoid the pandas-2.x "concat with empty / all-NA" FutureWarning by
+    # only concatenating when the existing frame has rows.
+    if existing.empty:
+        combined = new_row.copy()
+    else:
+        combined = pd.concat([existing, new_row], ignore_index=True)
     combined = _ensure_columns(combined)
 
     # Coerce dtypes -> arrow schema
-    combined["seed"] = combined["seed"].fillna(0).astype("int64")
+    combined["seed"] = (
+        pd.to_numeric(combined["seed"], errors="coerce").fillna(0).astype("int64")
+    )
     for col, t in zip(CANONICAL_SCHEMA.names, CANONICAL_SCHEMA.types):
         if pa.types.is_floating(t):
             combined[col] = pd.to_numeric(combined[col], errors="coerce")
