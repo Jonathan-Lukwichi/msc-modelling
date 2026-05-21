@@ -2,6 +2,24 @@
 
   y_hat = f_A(x) + f_B(residuals_of_A_on_training_fold)
 
+.. deprecated:: Prompt 4 of the Ch6 refactor
+    This module uses **in-sample** training residuals from a single fit on
+    the whole train fold. That recipe is subject to the selection bias
+    documented by Khashei & Bijari (2011, ASOC 11(2):2664-2675) and
+    methodologically critiqued by Hewamalage, Bergmeir & Bandara (2021,
+    IJF 37(1):388-427) -- the refiner under-states the generalisation
+    residual variance and overfits.
+
+    Use ``src.forecasting.hybrids.oof.oof_residuals.OOFResidualHybrid``
+    instead. It builds **out-of-fold** residuals via the shared
+    ``RollingForecaster``, applies consistent residual standardisation,
+    and supports nested Optuna HPO over the refiner -- removing the
+    HPO-inheritance bug documented in RESULTS.md §4sexies.
+
+    The functions below remain importable for backward compatibility with
+    ``scripts/09_hybrids.py`` and ``scripts/11_lstm_xgb_hybrid.py`` until
+    those scripts are migrated.
+
 Implemented as a generic residual-refinement wrapper that consumes:
   - already-saved base predictions on val (artefacts/predictions/{base}.csv)
   - in-sample training residuals from a fresh base fit on the train fold
