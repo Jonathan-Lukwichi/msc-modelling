@@ -221,13 +221,63 @@ if ph_path.exists():
         check(label, claim, sub["MAPE"].iloc[0])
 
 # =====================================================================
-# 7. HPO fairness audit (chap6 Table 6.2)
+# 7. HPO fairness audit -- 3x3x3 grid (chap6 Tab 6.2 + Rules A and B)
 # =====================================================================
-section("7. HPO fairness audit cv_RMSE (chap6 Tab 6.2)")
+section("7. HPO fairness audit (chap6 Tab 6.2)")
 hpo_path = ROOT / "artefacts" / "metrics" / "hpo_comparison.csv"
 if hpo_path.exists():
     hpo = pd.read_csv(hpo_path)
-    print(hpo.head(15).to_string(index=False))
+    print(hpo[["model", "method", "best_cv_RMSE", "best_cv_MAPE", "time_min"]].to_string(index=False))
+
+    # Per-cell numeric claims (chap6 Tab 6.2 cells)
+    cell_claims = [
+        ("XGBoost Grid cv_RMSE",     "XGBoost", "Grid",   "best_cv_RMSE", 7.066),
+        ("XGBoost Grid cv_MAPE",     "XGBoost", "Grid",   "best_cv_MAPE", 9.166),
+        ("XGBoost Random cv_RMSE",   "XGBoost", "Random", "best_cv_RMSE", 7.129),
+        ("XGBoost Random cv_MAPE",   "XGBoost", "Random", "best_cv_MAPE", 8.832),
+        ("XGBoost Optuna cv_RMSE",   "XGBoost", "Optuna", "best_cv_RMSE", 7.102),
+        ("XGBoost Optuna cv_MAPE",   "XGBoost", "Optuna", "best_cv_MAPE", 9.169),
+        ("ANN Grid cv_RMSE",         "ANN",     "Grid",   "best_cv_RMSE", 7.320),
+        ("ANN Random cv_RMSE",       "ANN",     "Random", "best_cv_RMSE", 6.992),
+        ("ANN Random cv_MAPE",       "ANN",     "Random", "best_cv_MAPE", 9.231),
+        ("ANN Optuna cv_RMSE",       "ANN",     "Optuna", "best_cv_RMSE", 7.144),
+        ("LSTM Grid cv_RMSE",        "LSTM",    "Grid",   "best_cv_RMSE", 7.592),
+        ("LSTM Random cv_RMSE",      "LSTM",    "Random", "best_cv_RMSE", 7.836),
+        ("LSTM Optuna cv_RMSE",      "LSTM",    "Optuna", "best_cv_RMSE", 7.532),
+        ("LSTM Optuna cv_MAPE",      "LSTM",    "Optuna", "best_cv_MAPE", 9.588),
+    ]
+    for label, model, method, col, claim in cell_claims:
+        sub = hpo[(hpo["model"] == model) & (hpo["method"] == method)]
+        if sub.empty:
+            check(label, claim, None)
+            continue
+        check(label, claim, sub[col].iloc[0], tol=0.01)
+
+    # Rule A and Rule B verdicts (chap6 Tab 6.3 + verdict prose)
+    # Rule A: per-model best on cv_RMSE
+    print()
+    rule_a = hpo.loc[hpo.groupby("model")["best_cv_RMSE"].idxmin()][["model", "method", "best_cv_RMSE"]]
+    print("Rule A verdicts (per-model best cv_RMSE):")
+    print(rule_a.to_string(index=False))
+    # Rule B: minimax across models per optimizer
+    rule_b_worst = hpo.groupby("method")["best_cv_RMSE"].max().sort_values()
+    print(f"\nRule B verdict (lowest worst-case cv_RMSE across models): "
+          f"{rule_b_worst.idxmin()} at {rule_b_worst.min():.3f}")
+    # Categorical claims about the verdicts (Rule A and Rule B)
+    def _check_eq(label, claim, actual):
+        global passes, fails
+        ok = (str(claim) == str(actual))
+        tag = "[PASS]" if ok else "[FAIL]"
+        if ok: passes += 1
+        else: fails += 1
+        print(f"  {tag} {label}: claim={claim}  actual={actual}")
+    _check_eq("Rule A XGBoost optimizer", "Grid",
+              rule_a.loc[rule_a["model"] == "XGBoost", "method"].iloc[0])
+    _check_eq("Rule A ANN optimizer", "Random",
+              rule_a.loc[rule_a["model"] == "ANN", "method"].iloc[0])
+    _check_eq("Rule A LSTM optimizer", "Optuna",
+              rule_a.loc[rule_a["model"] == "LSTM", "method"].iloc[0])
+    _check_eq("Rule B project-wide optimizer", "Optuna", rule_b_worst.idxmin())
 
 # =====================================================================
 # 8. Augmented features rejection (RESULTS Sec 6ter)
