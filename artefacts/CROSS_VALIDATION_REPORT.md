@@ -108,7 +108,7 @@ Hierarchical reconciliation (Prompt 9) was not in the executed subset; the chap6
 
 | Model | expanding | sliding-450 | sliding-450+RuLSIF | Δ |
 |---|---:|---:|---:|---:|
-| dow_mean (rolling) | 20.53 | **14.69** | 14.69 | **−5.85** |
+| dow_mean (rolling) | 20.53 | **14.68** | 14.68 | **−5.85** |
 | SARIMAX | 13.11 | 13.39 | 13.39 | +0.28 |
 | XGBoost (this orchestrator) | 14.40 | 14.24 | 15.06 | −0.16 |
 

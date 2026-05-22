@@ -864,7 +864,7 @@ stationary series.**
 | Hybrid | h=1 | h=2 | h=3 | h=4 | h=5 | h=6 | h=7 |
 |---|---|---|---|---|---|---|---|
 | **SARIMAX + LSTM** | 13.27 | 13.99 | 13.67 | 13.96 | 14.11 | **10.70 ✅** | **10.86 ✅** |
-| SARIMAX + XGBoost | 14.69 | 13.89 | 13.18 | 15.27 | 14.09 | 11.86 | 11.18 |
+| SARIMAX + XGBoost | 14.68 | 13.89 | 13.18 | 15.27 | 14.09 | 11.86 | 11.18 |
 | LSTM + XGBoost | 14.62 | 14.62 | 15.10 | 14.46 | 13.67 | 12.81 | 12.29 |
 | STL + XGBoost | 15.58 | 25.50 | 17.52 | 15.89 | 14.05 | **34.94 ⚠** | 28.00 |
 | STL + ANN | 15.13 | 23.79 | 16.51 | 15.84 | 13.91 | **34.48 ⚠** | 24.65 |
@@ -1818,11 +1818,11 @@ per ML model per specialty = 150 trials total) in
 
 | Model | expanding | sliding-450 | sliding-450 + RuLSIF | Δ vs expanding |
 |-------|----------:|------------:|---------------------:|---------------:|
-| dow_mean (rolling) | 20.53 | **14.69** | 14.69 | **−5.85** |
+| dow_mean (rolling) | 20.53 | **14.68** | 14.68 | **−5.85** |
 | SARIMAX | 13.11 | 13.39 | 13.39 | +0.28 |
 | XGBoost (this orchestrator) | 14.40 | 14.24 | 15.06 | −0.16 |
 
-**Headline finding**: limiting the train window to the most recent 450 days recovers **5.85 percentage points** of test MAPE on the rolling day-of-week baseline — from 20.53 % under the expanding-window default to 14.69 % under the sliding window. This is the single largest drift-recovery result in the project and is exactly what the Sugiyama-Krauledat-Müller (2007) IWCV / Gretton (2009) KMM / Yamada (2013) RuLSIF framework was registered to deliver for the under-resourced-clinic deployment tier (NHI primary care, where the operational floor would be a DoW-mean lookup; see RESULTS.md §6.7 below).
+**Headline finding**: limiting the train window to the most recent 450 days recovers **5.85 percentage points** of test MAPE on the rolling day-of-week baseline — from 20.53 % under the expanding-window default to 14.68 % under the sliding window. This is the single largest drift-recovery result in the project and is exactly what the Sugiyama-Krauledat-Müller (2007) IWCV / Gretton (2009) KMM / Yamada (2013) RuLSIF framework was registered to deliver for the under-resourced-clinic deployment tier (NHI primary care, where the operational floor would be a DoW-mean lookup; see RESULTS.md §6.7 below).
 
 **SARIMAX is essentially indifferent** to the sliding-vs-expanding choice (+0.28 pp regression under sliding-450). The seasonal-MA(1) machinery already accommodates short-window drift via its rolling weekly refit; the larger training window adds smoothing that is approximately balanced by the noisier old data it includes. SARIMAX is therefore the right default for the NHI secondary-tier deployment configuration in Ch8 §8.5.
 
