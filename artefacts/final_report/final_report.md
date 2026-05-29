@@ -58,7 +58,15 @@ This report consolidates Phases 1, 2, and 3 of the Task-1 (daily ED arrivals) fo
 
 ## Phase 3 — Feature ablation (top-2 models)
 
-_Phase 3 in progress._
+| model   | config       |   n_features |   cv_RMSE |   cv_MAPE |   val_MAPE |   val_MAE |   val_RMSE |   val_R2 |   weekly_avg_pct |   monthly_avg_pct |   yearly_avg_pct |
+|:--------|:-------------|-------------:|----------:|----------:|-----------:|----------:|-----------:|---------:|-----------------:|------------------:|-----------------:|
+| sarimax | A_raw_only   |           15 |     8.168 |    12.111 |     12.510 |     7.147 |      9.133 |    0.151 |            5.891 |             2.561 |            1.866 |
+| sarimax | B_engineered |           99 |     8.168 |    12.111 |     12.510 |     7.147 |      9.133 |    0.151 |            5.891 |             2.561 |            1.866 |
+| sarimax | C_selection  |            1 |     8.168 |    12.111 |     12.510 |     7.147 |      9.133 |    0.151 |            5.891 |             2.561 |            1.866 |
+| sarimax | D_both       |           23 |     8.168 |    12.111 |     12.510 |     7.147 |      9.133 |    0.151 |            5.891 |             2.561 |            1.866 |
+| xgboost | A_raw_only   |           15 |     8.596 |    12.747 |     13.610 |     8.566 |     10.857 |   -0.200 |            9.554 |             9.155 |            9.166 |
+| xgboost | C_selection  |            1 |     8.791 |    13.265 |     14.216 |     8.993 |     11.483 |   -0.342 |           10.314 |             9.893 |            9.929 |
+| xgboost | D_both       |           23 |     8.340 |    11.902 |     11.985 |     7.092 |      9.394 |    0.102 |            4.146 |             2.292 |            1.667 |
 
 ## Figures
 
