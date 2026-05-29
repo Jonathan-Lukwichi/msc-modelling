@@ -1,0 +1,79 @@
+Models to run: ['stl_lstm', 'sarimax_lstm', 'lstm_xgb']
+Loaded data: y=2395, X=(2395, 23), train=848, val=184, test=396
+Chapter 5 defaults:
+{
+  "xgboost": {
+    "n_estimators": 200,
+    "max_depth": 5,
+    "learning_rate": 0.1,
+    "subsample": 0.85
+  },
+  "ann": {
+    "hidden_layers": 2,
+    "units": 128,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "seed": 42
+  },
+  "lstm": {
+    "lookback": 14,
+    "units": 96,
+    "dropout": 0.2,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "seed": 42
+  },
+  "arima": {
+    "order": [
+      1,
+      1,
+      1
+    ]
+  },
+  "sarimax": {
+    "order": [
+      1,
+      1,
+      1
+    ],
+    "seasonal_order": [
+      1,
+      1,
+      1,
+      7
+    ]
+  }
+}
+
+======================================================================
+[stl_lstm] starting...
+======================================================================
+  [1/4] 10-fold rolling-origin CV...
+    avg RMSE = 9.366  avg MAPE = 12.73%  (77s)
+  [2/4] Rolling-origin weekly refit on val...
+  [done] val MAPE = 17.94%  RMSE = 13.479  (total 892s)
+
+======================================================================
+[sarimax_lstm] starting...
+======================================================================
+  [1/4] 10-fold rolling-origin CV...
+    avg RMSE = 7.569  avg MAPE = 10.49%  (143s)
+  [2/4] Rolling-origin weekly refit on val...
+  [done] val MAPE = 16.03%  RMSE = 11.484  (total 2481s)
+
+======================================================================
+[lstm_xgb] starting...
+======================================================================
+  [1/4] 10-fold rolling-origin CV...
+    avg RMSE = 7.556  avg MAPE = 10.48%  (77s)
+  [2/4] Rolling-origin weekly refit on val...
+  [done] val MAPE = 15.51%  RMSE = 11.381  (total 1648s)
+
+======================================================================
+PHASE 1 SUMMARY (all models, Chapter 5 defaults)
+======================================================================
+       model  cv_avg_RMSE  cv_avg_MAPE  val_MAPE   val_MAE  val_RMSE    val_R2  weekly_avg_pct_error  monthly_avg_pct_error  yearly_avg_pct_error
+    stl_lstm     9.365884    12.734212 17.937063 10.485452 13.479433 -0.848950              9.046626               3.052751              0.342567
+sarimax_lstm     7.568646    10.492238 16.030532  9.358029 11.484243 -0.342106              6.217304               1.802966              0.534642
+    lstm_xgb     7.555694    10.480827 15.505253  9.018527 11.381101 -0.318106              7.261497               1.723433              1.124381

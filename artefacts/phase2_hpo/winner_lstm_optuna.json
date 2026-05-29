@@ -1,0 +1,8 @@
+{
+  "lookback": 21,
+  "units": 192,
+  "dropout": 0.2570351922786027,
+  "learning_rate": 0.00021839352923182988,
+  "batch_size": 32,
+  "seed": 42
+}

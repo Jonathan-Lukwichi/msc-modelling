@@ -1,0 +1,8 @@
+{
+  "hidden_layers": 1,
+  "units": 64,
+  "dropout": 0.2,
+  "learning_rate": 0.001,
+  "batch_size": 32,
+  "seed": 42
+}

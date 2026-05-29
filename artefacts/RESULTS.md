@@ -115,28 +115,35 @@ longer-horizon procurement.
 
 | Item | Result |
 |---|---|
-| Models implemented | 11 of 11 once LSTM standalone and LSTM+XGBoost finish (10/11 so far) |
+| Models implemented | 11 standalone + 6 hybrids, all complete |
 | Validation block | 184 days, 2024-07-01 → 2024-12-31 |
-| Test block | 396 days, 2025-01-01 → 2026-01-31 (OOD, mean +18.3 % vs train) |
+| Test block | 396 days, 2025-01-01 → 2026-01-31 (OOD, mean +18.3 % vs train per Ch5 §5.5.2) |
 | Primary metric | MAPE (Ch3 §3.6.2; Susnjak & Maddigan 2023, p. 721) |
-| **Headline winner on val (so far)** | **SARIMAX + LSTM residual hybrid, 12.10 % MAPE** |
+| **Headline winner (locked)** | **XGBoost RMSE-tuned, val 11.99 % / test 12.63 % MAPE, test MASE 0.724** |
+| Best hybrid | SARIMAX + LSTM residual hybrid, val 12.19 % / test 12.95 % MAPE (does not displace the standalone) |
+| Recommended UQ | Adaptive Conformal Inference, γ = 0.005, 95 % nominal, achieved coverage 0.942 |
 
-The validation-set MAPE of the best model (**12.10 %**) sits **at the upper end of
-the range reported by published daily-ED studies** for 1- to 30-day horizons
-(Susnjak & Maddigan 2023, Table 1: best MAPEs 2.9 – 12.3 % across 11 prior
-studies; Boyle 2012 7.0 %, Marcilio 2013 7.6–9.7 %, Whitt & Zhang 2019 8.4 %,
-Sudarshan 2021 8.9 % at 3-day, 9.2 % at 7-day horizon). Lower MAPEs reported
-elsewhere (e.g. Fan 2022 ELM 3.0 % on weekly Hong Kong data, Karsanti 2019 LSTM
-4.7 % on monthly visits) reflect either weekly/monthly aggregation that smooths
-intra-week variance, or training-data sizes substantially larger than ours
-(848 modelling days post-COVID).
+The XGBoost RMSE-tuned standalone wins on val MAPE, test MAPE, and Winkler 95
+(Table~2 of this report; verified against `leaderboard_canonical.parquet` by
+`scripts/27_cross_validate_claims.py`, 57 / 57 PASS). Its **11.99 %** validation
+MAPE sits at the upper edge of the range reported by published daily-ED studies
+for 1- to 30-day horizons (Susnjak & Maddigan 2023, Table 1: best MAPEs 2.9 –
+12.3 % across 11 prior studies; Boyle 2012 7.0 %, Marcilio 2013 7.6–9.7 %, Whitt
+& Zhang 2019 8.4 %, Sudarshan 2021 8.9 % at 3-day, 9.2 % at 7-day horizon).
+Lower MAPEs reported elsewhere (e.g. Fan 2022 ELM 3.0 % on weekly Hong Kong
+data, Karsanti 2019 LSTM 4.7 % on monthly visits) reflect either weekly/monthly
+aggregation that smooths intra-week variance, or training-data sizes
+substantially larger than ours (848 modelling days post-COVID).
 
 Susnjak & Maddigan (2023, p. 723) report their own best model degrading from
 8.9–9.1 % MAPE on a stable 2017–2019 partition to **12.1–18.4 % MAPE on a
-volatile 2021 partition** under COVID-era disruption. Our val MAPE of 12.10 %
+volatile 2021 partition** under COVID-era disruption. Our val MAPE of 11.99 %
 on a clean 2024-H2 partition is squarely comparable to their stable-period
-results, and our anticipated test MAPE under the +18.3 % drift will be
-benchmarked against their volatile-period numbers in §5.
+results, and our test MAPE of 12.63 % under the +18.3 % drift sits inside their
+volatile-period range. The hybrid family is held in reserve under the
+out-of-fold construction (§4sexies) but the bias-corrected rebuild does not
+overtake the XGBoost standalone, so the hybrids are reported as methodological
+findings rather than as the deployment choice.
 
 ---
 
@@ -618,8 +625,10 @@ defensibly with a footnote citing this equivalence.
 ## 5. Out-of-distribution test pass (plan §17 mandate)
 
 Test block (2025-01-01 → 2026-01-31, 396 days) was touched **exactly once**
-after every val number was finalised. Test mean **69.05** vs train mean
-**58.71** = **+17.6 % level shift** (KS D = 0.44 per Ch5 §5.5.2). The reviewer
+after every val number was finalised. Per Ch5 §5.5.2 the test mean is **69.1**
+patients/day (modelling-pipeline computation 69.05) against the train mean of
+**58.4** (modelling-pipeline 58.71); the canonical level shift is
+**+18.3 %** (+10.7 patients/day) with KS distance **D = 0.44**. The reviewer
 of §5.5.2's split correctly flagged that test MAPE should be read as
 *"upper bound under drift"*, not a same-regime number.
 
@@ -1387,7 +1396,7 @@ data:
 | Karsanti et al. (2019) | monthly | ~5 years | 4.7 % (LSTM) |
 | Boyle (2012) | daily | 4 years | 7.0 % (ARIMA) |
 | Susnjak & Maddigan (2023) | daily | 3 years (stable) | 8.9 % (Voting) |
-| **This work** | **daily** | **2.3 years** | **12.1 % (SARIMAX+LSTM)** |
+| **This work** | **daily** | **2.3 years** | **11.99 % val / 12.63 % test (XGBoost RMSE-tuned)** |
 
 Our 848-day training window — the post-COVID-only block per Ch5 §5.5.2 — is
 **shorter than every comparable study**. Daily resolution × short window
