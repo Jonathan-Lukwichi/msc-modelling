@@ -1,0 +1,4 @@
+rank,model_name,family,val_MAPE,val_RMSE,pickle_size_mb,bundled_path
+1,sarimax_xgb,Hybrid (SARIMAX + XGBoost residual),12.04,8.878,38.13,artefacts\deploy_top3\01_sarimax_xgb.pkl
+2,sarimax,"SARIMAX(p,1,q)(P,1,Q)_7",12.34,8.984,37.84,artefacts\deploy_top3\02_sarimax.pkl
+3,sarimax_lstm,Hybrid (SARIMAX + LSTM residual),12.19,9.047,37.93,artefacts\deploy_top3\03_sarimax_lstm.pkl

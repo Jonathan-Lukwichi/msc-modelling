@@ -1,0 +1,16 @@
+{
+  "rank": 1,
+  "model_name": "sarimax_xgb",
+  "family": "Hybrid (SARIMAX + XGBoost residual)",
+  "val_RMSE": 8.878,
+  "val_MAPE": 12.04,
+  "phase2_algo": "optuna",
+  "source_pickle": "artefacts\\models\\deploy\\hybrid_sarimax_xgb.pkl",
+  "bundled_path": "artefacts\\deploy_top3\\01_sarimax_xgb.pkl",
+  "training_timestamp_utc": "2026-05-29T15:08:36.012879+00:00",
+  "fit_data_window": "train + val (2022-03-01 to 2024-12-31)",
+  "hospital": "Steve Biko Academic Hospital, Pretoria, South Africa",
+  "target": "total_daily_arrivals",
+  "thesis_chapter": "Chapter 6 \u2014 Model Development and Evaluation",
+  "pickle_size_mb": 38.13
+}
