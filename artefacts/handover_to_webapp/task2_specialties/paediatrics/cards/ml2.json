@@ -1,0 +1,21 @@
+{
+  "alias": "ML 2",
+  "family": "ML",
+  "task": "task2",
+  "specialty": "Paediatrics",
+  "resolution": "daily",
+  "pickle_filename": "ml2.pkl",
+  "pickle_size_mb": 0.0,
+  "performance": {
+    "val_MAPE": 55.02
+  },
+  "badge": "research",
+  "badge_label": "Research preview",
+  "badge_emoji": "🔴",
+  "training_window": "train+val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T20:00:29.259533+00:00",
+  "description": "Alias ML 2 (ML) for Paediatrics. Badge: Research preview.",
+  "internal_only": {
+    "scientific_name": "ANN"
+  }
+}

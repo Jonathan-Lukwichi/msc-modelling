@@ -1,0 +1,42 @@
+{
+  "generated_utc": "2026-06-11T20:06:47.262577+00:00",
+  "training_window": {
+    "start": "2022-03-01",
+    "end": "2024-12-31",
+    "days": 1037,
+    "rationale": "train + val combined, post-COVID block per Chapter 5 §5.5.2"
+  },
+  "validation_block": {
+    "start": "2024-07-01",
+    "end": "2024-12-31",
+    "days": 184
+  },
+  "test_block": {
+    "start": "2025-01-01",
+    "end": "2026-01-31",
+    "days": 396
+  },
+  "documented_drift": {
+    "train_val_ks_d": 0.14,
+    "val_test_ks_d": 0.37,
+    "train_test_ks_d": 0.44,
+    "note": "Test block exhibits substantial distributional drift (KS = 0.44) per Chapter 5 §5.5.2"
+  },
+  "hpo_traces": {
+    "phase1_defaults": "artefacts/phase1_defaults/",
+    "phase2_hpo": "artefacts/phase2_hpo/",
+    "phase3_ablation": "artefacts/phase3_ablation/"
+  },
+  "noise_floor": {
+    "theoretical_mape_lower_bound": "~12% (Negative Binomial dispersion ratio 3.21)",
+    "achieved_val_mape_top_model": 12.04,
+    "achieved_val_mape_top_model_alias": "Hybrid 1",
+    "conclusion": "Top model sits at the dispersion-implied noise floor"
+  },
+  "liability_notes": [
+    "Research-grade artefacts produced for academic evaluation only.",
+    "Clinical deployment requires ethical approval at deployment site.",
+    "Multi-site prospective validation required before commercial deployment.",
+    "POPIA compliance review required for any production system handling patient data."
+  ]
+}

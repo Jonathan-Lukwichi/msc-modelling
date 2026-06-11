@@ -1,0 +1,26 @@
+{
+  "alias": "Hybrid 1",
+  "family": "Hybrid",
+  "task": "task1",
+  "task_label": "Daily Total ED Arrivals",
+  "resolution": "daily",
+  "pickle_filename": "hybrid1.pkl",
+  "pickle_size_mb": 38.13,
+  "performance": {
+    "val_MAPE": 12.04,
+    "val_RMSE": 8.88,
+    "weekly_avg_pct_error": 6.397558705259329,
+    "monthly_avg_pct_error": 2.469198844102807,
+    "yearly_avg_pct_error": 0.3806398509196913
+  },
+  "badge": "operational",
+  "badge_label": "Operational",
+  "badge_emoji": "🟢",
+  "training_window": "train + val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T18:52:15.300482+00:00",
+  "description": "Alias Hybrid 1 (Hybrid). Steve Biko Hospital ED daily total arrivals forecaster. Operational badge tier: Operational.",
+  "internal_only": {
+    "scientific_name": "SARIMAX + XGBoost residual refiner",
+    "source_pickle": "artefacts\\models\\deploy\\hybrid_sarimax_xgb.pkl"
+  }
+}

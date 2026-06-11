@@ -1,0 +1,305 @@
+openapi: 3.0.3
+info:
+  title: Steve Biko ED Forecast API
+  description: |
+    REST API for the Steve Biko Academic Hospital ED arrivals forecasting
+    web application. Exposes two separate forecasting products as parallel
+    namespaces: /task1 and /task2.
+  version: 1.0.0
+  contact:
+    name: University of Pretoria — MSc Modelling Project
+    email: jonathanlukwichi25@gmail.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+  - url: https://forecast.steve-biko.example.org
+    description: Production placeholder
+
+tags:
+  - name: task1
+    description: Daily Total ED Arrivals (single-series forecast)
+  - name: task2
+    description: Per-Specialty Arrivals (7 specialties)
+  - name: metadata
+    description: Aliases, badges, and dashboard data
+
+paths:
+
+  # ─────────────────────────────────────────────────────────────────
+  # TASK 1 — Daily Total ED Arrivals
+  # ─────────────────────────────────────────────────────────────────
+  /task1/models:
+    get:
+      tags: [task1]
+      summary: List available Task 1 models (always all 6 aliases)
+      responses:
+        '200':
+          description: Array of model summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelSummary'
+
+  /task1/forecast:
+    post:
+      tags: [task1]
+      summary: Forecast daily ED arrivals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task1ForecastRequest'
+      responses:
+        '200':
+          description: Forecast result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResponse'
+        '400':
+          description: Invalid request (bad alias, bad horizon, ...)
+        '503':
+          description: Model temporarily unavailable
+
+  /task1/metrics:
+    get:
+      tags: [task1, metadata]
+      summary: Get headline metrics for all Task 1 models (for dashboard)
+      responses:
+        '200':
+          description: Per-model headline metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeadlineMetrics'
+
+  # ─────────────────────────────────────────────────────────────────
+  # TASK 2 — Per-Specialty Arrivals
+  # ─────────────────────────────────────────────────────────────────
+  /task2/specialties:
+    get:
+      tags: [task2]
+      summary: List all 7 specialties and which models are available per specialty
+      responses:
+        '200':
+          description: Specialty catalogue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    specialty:
+                      type: string
+                      enum:
+                        [Medicine, Orthopaedics, Surgery, Gynaecology,
+                         Paediatrics, Maternity, Psychiatry]
+                    resolution:
+                      type: string
+                      enum: [daily, weekly]
+                      description: 'Maternity and Psychiatry forecast WEEKLY only.'
+                    available_models:
+                      type: array
+                      items:
+                        type: string
+                        enum: ['Stat 1', 'Stat 2', 'ML 1', 'ML 2', 'Hybrid 1', 'Hybrid 2']
+
+  /task2/forecast:
+    post:
+      tags: [task2]
+      summary: Forecast arrivals for a specific specialty
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task2ForecastRequest'
+      responses:
+        '200':
+          description: Forecast result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResponse'
+        '400':
+          description: Invalid request (model not available for this specialty, etc.)
+        '503':
+          description: Model temporarily unavailable
+
+  /task2/metrics:
+    get:
+      tags: [task2, metadata]
+      summary: Per-specialty headline metrics for dashboard
+      responses:
+        '200':
+          description: Specialty × Model × metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeadlineMetrics'
+
+  # ─────────────────────────────────────────────────────────────────
+  # METADATA
+  # ─────────────────────────────────────────────────────────────────
+  /aliases:
+    get:
+      tags: [metadata]
+      summary: Get alias → scientific name mapping (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Mapping object
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+
+    ModelSummary:
+      type: object
+      properties:
+        alias:
+          type: string
+          example: 'Hybrid 1'
+        family:
+          type: string
+          enum: [Statistical, ML, Hybrid]
+          example: Hybrid
+        val_MAPE:
+          type: number
+          example: 12.04
+        val_RMSE:
+          type: number
+          example: 8.88
+        badge:
+          type: string
+          enum: [operational, planning, research]
+          example: operational
+        badge_label:
+          type: string
+          example: Operational
+        badge_emoji:
+          type: string
+          example: '🟢'
+
+    HeadlineMetrics:
+      type: object
+      properties:
+        alias:
+          type: string
+        task:
+          type: string
+          enum: [task1, task2]
+        specialty:
+          type: string
+          nullable: true
+        resolution:
+          type: string
+          enum: [daily, weekly]
+        val_MAPE:
+          type: number
+        val_RMSE:
+          type: number
+        val_MAE:
+          type: number
+        val_R2:
+          type: number
+        weekly_avg_pct_error:
+          type: number
+          nullable: true
+        monthly_avg_pct_error:
+          type: number
+          nullable: true
+        yearly_avg_pct_error:
+          type: number
+          nullable: true
+        badge:
+          type: string
+          enum: [operational, planning, research]
+
+    Task1ForecastRequest:
+      type: object
+      required: [alias, horizon, start_date]
+      properties:
+        alias:
+          type: string
+          enum: ['Stat 1', 'Stat 2', 'ML 1', 'ML 2', 'Hybrid 1', 'Hybrid 2']
+        horizon:
+          type: string
+          enum: [1d, 7d, monthly, yearly]
+        start_date:
+          type: string
+          format: date
+          description: First date of the forecast window (YYYY-MM-DD)
+
+    Task2ForecastRequest:
+      type: object
+      required: [alias, specialty, horizon, start_date]
+      properties:
+        alias:
+          type: string
+        specialty:
+          type: string
+          enum:
+            [Medicine, Orthopaedics, Surgery, Gynaecology,
+             Paediatrics, Maternity, Psychiatry]
+        horizon:
+          type: string
+          description: |
+            Daily specialties accept 1d / 7d / monthly / yearly.
+            Maternity and Psychiatry (weekly resolution) accept
+            1week / 4weeks / yearly.
+        start_date:
+          type: string
+          format: date
+
+    ForecastResponse:
+      type: object
+      properties:
+        alias:
+          type: string
+        badge:
+          type: string
+          enum: [operational, planning, research]
+        horizon:
+          type: string
+        forecast_dates:
+          type: array
+          items:
+            type: string
+            format: date
+        point_forecasts:
+          type: array
+          items:
+            type: number
+        lower_95:
+          type: array
+          nullable: true
+          items:
+            type: number
+        upper_95:
+          type: array
+          nullable: true
+          items:
+            type: number
+        aggregated_horizon_total:
+          type: number
+          nullable: true
+          description: 'Sum of point_forecasts when horizon is monthly or yearly'
+        warning:
+          type: string
+          nullable: true
+          description: 'e.g. "Research preview - do not use for staffing decisions" for red-badge models'

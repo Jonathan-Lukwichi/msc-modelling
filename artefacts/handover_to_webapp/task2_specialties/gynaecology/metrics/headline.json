@@ -1,0 +1,20 @@
+[
+  {
+    "alias": "Stat 1",
+    "badge": "research",
+    "val_MAPE": 47.33,
+    "pickle": "stat1.pkl"
+  },
+  {
+    "alias": "ML 1",
+    "badge": "research",
+    "val_MAPE": 46.95,
+    "pickle": "ml1.pkl"
+  },
+  {
+    "alias": "ML 2",
+    "badge": "research",
+    "val_MAPE": 46.33,
+    "pickle": "ml2.pkl"
+  }
+]

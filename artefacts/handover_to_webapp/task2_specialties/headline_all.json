@@ -1,0 +1,132 @@
+[
+  {
+    "alias": "ML 1",
+    "task": "task2",
+    "specialty": "Gynaecology",
+    "resolution": "daily",
+    "val_MAPE": 46.95,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "ML 2",
+    "task": "task2",
+    "specialty": "Gynaecology",
+    "resolution": "daily",
+    "val_MAPE": 46.33,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "Stat 1",
+    "task": "task2",
+    "specialty": "Gynaecology",
+    "resolution": "daily",
+    "val_MAPE": 47.33,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "Stat 2",
+    "task": "task2",
+    "specialty": "Maternity",
+    "resolution": "weekly",
+    "val_MAPE": 54.05,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "ML 1",
+    "task": "task2",
+    "specialty": "Medicine",
+    "resolution": "daily",
+    "val_MAPE": 21.61,
+    "badge": "planning",
+    "badge_label": "Planning",
+    "badge_emoji": "🟡"
+  },
+  {
+    "alias": "ML 2",
+    "task": "task2",
+    "specialty": "Medicine",
+    "resolution": "daily",
+    "val_MAPE": 22.49,
+    "badge": "planning",
+    "badge_label": "Planning",
+    "badge_emoji": "🟡"
+  },
+  {
+    "alias": "Stat 1",
+    "task": "task2",
+    "specialty": "Medicine",
+    "resolution": "daily",
+    "val_MAPE": 21.37,
+    "badge": "planning",
+    "badge_label": "Planning",
+    "badge_emoji": "🟡"
+  },
+  {
+    "alias": "Stat 1",
+    "task": "task2",
+    "specialty": "Orthopaedics",
+    "resolution": "daily",
+    "val_MAPE": 84.55,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "ML 2",
+    "task": "task2",
+    "specialty": "Paediatrics",
+    "resolution": "daily",
+    "val_MAPE": 55.02,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "Stat 1",
+    "task": "task2",
+    "specialty": "Paediatrics",
+    "resolution": "daily",
+    "val_MAPE": 54.92,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "Stat 2",
+    "task": "task2",
+    "specialty": "Psychiatry",
+    "resolution": "weekly",
+    "val_MAPE": 77.46,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "ML 1",
+    "task": "task2",
+    "specialty": "Surgery",
+    "resolution": "daily",
+    "val_MAPE": 54.24,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  },
+  {
+    "alias": "ML 2",
+    "task": "task2",
+    "specialty": "Surgery",
+    "resolution": "daily",
+    "val_MAPE": 53.57,
+    "badge": "research",
+    "badge_label": "Research preview",
+    "badge_emoji": "🔴"
+  }
+]

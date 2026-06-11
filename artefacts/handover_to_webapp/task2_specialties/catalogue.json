@@ -1,0 +1,57 @@
+[
+  {
+    "specialty": "Medicine",
+    "resolution": "daily",
+    "available_models": [
+      "ML 1",
+      "ML 2",
+      "Stat 1"
+    ]
+  },
+  {
+    "specialty": "Orthopaedics",
+    "resolution": "daily",
+    "available_models": [
+      "Stat 1"
+    ]
+  },
+  {
+    "specialty": "Surgery",
+    "resolution": "daily",
+    "available_models": [
+      "ML 1",
+      "ML 2"
+    ]
+  },
+  {
+    "specialty": "Gynaecology",
+    "resolution": "daily",
+    "available_models": [
+      "ML 1",
+      "ML 2",
+      "Stat 1"
+    ]
+  },
+  {
+    "specialty": "Paediatrics",
+    "resolution": "daily",
+    "available_models": [
+      "ML 2",
+      "Stat 1"
+    ]
+  },
+  {
+    "specialty": "Maternity",
+    "resolution": "weekly",
+    "available_models": [
+      "Stat 2"
+    ]
+  },
+  {
+    "specialty": "Psychiatry",
+    "resolution": "weekly",
+    "available_models": [
+      "Stat 2"
+    ]
+  }
+]

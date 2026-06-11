@@ -1,0 +1,21 @@
+{
+  "alias": "Stat 1",
+  "family": "Statistical",
+  "task": "task2",
+  "specialty": "Orthopaedics",
+  "resolution": "daily",
+  "pickle_filename": "stat1.pkl",
+  "pickle_size_mb": 2.26,
+  "performance": {
+    "val_MAPE": 84.55
+  },
+  "badge": "research",
+  "badge_label": "Research preview",
+  "badge_emoji": "🔴",
+  "training_window": "train+val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T20:00:06.245008+00:00",
+  "description": "Alias Stat 1 (Statistical) for Orthopaedics. Badge: Research preview.",
+  "internal_only": {
+    "scientific_name": "ARIMA"
+  }
+}

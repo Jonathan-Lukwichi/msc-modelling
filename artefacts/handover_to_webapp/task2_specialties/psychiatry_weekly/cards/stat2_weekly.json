@@ -1,0 +1,21 @@
+{
+  "alias": "Stat 2",
+  "family": "Statistical",
+  "task": "task2",
+  "specialty": "Psychiatry",
+  "resolution": "weekly",
+  "pickle_filename": "stat2_weekly.pkl",
+  "pickle_size_mb": 0.17,
+  "performance": {
+    "val_MAPE": 77.46
+  },
+  "badge": "research",
+  "badge_label": "Research preview",
+  "badge_emoji": "🔴",
+  "training_window": "train+val weekly (2019-05-06 to 2024-12-30)",
+  "last_trained_utc": "2026-06-11T20:34:24.998708+00:00",
+  "description": "Alias Stat 2 (Statistical) for Psychiatry. Badge: Research preview.",
+  "internal_only": {
+    "scientific_name": "SARIMAX_weekly_no_seasonal"
+  }
+}

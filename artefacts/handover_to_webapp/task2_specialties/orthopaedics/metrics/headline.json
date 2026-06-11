@@ -1,0 +1,8 @@
+[
+  {
+    "alias": "Stat 1",
+    "badge": "research",
+    "val_MAPE": 84.55,
+    "pickle": "stat1.pkl"
+  }
+]

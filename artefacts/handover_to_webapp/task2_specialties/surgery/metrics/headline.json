@@ -1,0 +1,14 @@
+[
+  {
+    "alias": "ML 1",
+    "badge": "research",
+    "val_MAPE": 54.24,
+    "pickle": "ml1.pkl"
+  },
+  {
+    "alias": "ML 2",
+    "badge": "research",
+    "val_MAPE": 53.57,
+    "pickle": "ml2.pkl"
+  }
+]

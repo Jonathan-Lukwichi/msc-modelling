@@ -1,0 +1,21 @@
+{
+  "alias": "ML 2",
+  "family": "ML",
+  "task": "task2",
+  "specialty": "Medicine",
+  "resolution": "daily",
+  "pickle_filename": "ml2.pkl",
+  "pickle_size_mb": 0.0,
+  "performance": {
+    "val_MAPE": 22.49
+  },
+  "badge": "planning",
+  "badge_label": "Planning",
+  "badge_emoji": "🟡",
+  "training_window": "train+val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T19:59:34.860306+00:00",
+  "description": "Alias ML 2 (ML) for Medicine. Badge: Planning.",
+  "internal_only": {
+    "scientific_name": "ANN"
+  }
+}

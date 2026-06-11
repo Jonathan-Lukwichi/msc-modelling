@@ -1,0 +1,21 @@
+{
+  "alias": "ML 1",
+  "family": "ML",
+  "task": "task2",
+  "specialty": "Gynaecology",
+  "resolution": "daily",
+  "pickle_filename": "ml1.pkl",
+  "pickle_size_mb": 0.12,
+  "performance": {
+    "val_MAPE": 46.95
+  },
+  "badge": "research",
+  "badge_label": "Research preview",
+  "badge_emoji": "🔴",
+  "training_window": "train+val (2022-03-01 to 2024-12-31)",
+  "last_trained_utc": "2026-06-11T20:34:07.389116+00:00",
+  "description": "Alias ML 1 (ML) for Gynaecology. Badge: Research preview.",
+  "internal_only": {
+    "scientific_name": "XGBoost"
+  }
+}

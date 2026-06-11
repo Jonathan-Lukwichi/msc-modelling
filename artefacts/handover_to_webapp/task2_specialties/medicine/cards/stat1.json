@@ -1,0 +1,21 @@
+{
+  "alias": "Stat 1",
+  "family": "Statistical",
+  "task": "task2",
+  "specialty": "Medicine",
+  "resolution": "daily",
+  "pickle_filename": "stat1.pkl",
+  "pickle_size_mb": 0.69,
+  "performance": {
+    "val_MAPE": 21.37
+  },
+  "badge": "planning",
+  "badge_label": "Planning",
+  "badge_emoji": "🟡",
+  "training_window": "train+val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T19:58:58.222153+00:00",
+  "description": "Alias Stat 1 (Statistical) for Medicine. Badge: Planning.",
+  "internal_only": {
+    "scientific_name": "ARIMA"
+  }
+}

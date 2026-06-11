@@ -1,0 +1,28 @@
+# Web-app handover package — runtime dependencies
+# Tested with Python 3.13 / 3.14 on Windows
+
+# Core
+numpy>=1.26,<2.0
+pandas>=2.1
+joblib>=1.3
+pyyaml>=6.0
+
+# Statistical models (Stat 1 = ARIMA, Stat 2 = SARIMAX)
+pmdarima>=2.0.4
+statsmodels>=0.14
+
+# Machine learning (ML 1 = XGBoost, ML 2 = ANN)
+xgboost>=2.0
+scikit-learn>=1.3
+torch>=2.0          # for ML 2 + Hybrid 2 (LSTM refiner) inference
+
+# Web API (suggested — integrator may swap for Django / Flask)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+
+# Plot rendering (optional, only if dashboard renders charts server-side)
+matplotlib>=3.8
+
+# Dev / testing
+pytest>=7.4

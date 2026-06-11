@@ -1,0 +1,152 @@
+[
+  {
+    "alias": "Stat 1",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 13.33,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 6.063855877692175,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 2.2544310160079424,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 0.762049516729717,
+        "badge": "operational"
+      }
+    }
+  },
+  {
+    "alias": "Stat 2",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 12.34,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 6.066667247983504,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 2.4151333729191493,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 1.467054167896875,
+        "badge": "operational"
+      }
+    }
+  },
+  {
+    "alias": "ML 1",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 11.96,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 5.118456709780156,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 1.4173800771743297,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 0.6813053082824877,
+        "badge": "operational"
+      }
+    }
+  },
+  {
+    "alias": "ML 2",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 12.32,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 4.982736689009693,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 2.991036351848875,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 1.4701465592650984,
+        "badge": "operational"
+      }
+    }
+  },
+  {
+    "alias": "Hybrid 1",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 12.04,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 6.397558705259329,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 2.469198844102807,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 0.3806398509196913,
+        "badge": "operational"
+      }
+    }
+  },
+  {
+    "alias": "Hybrid 2",
+    "horizons": {
+      "daily": {
+        "metric": "MAPE",
+        "value": 12.19,
+        "badge": "operational"
+      },
+      "weekly": {
+        "metric": "pct_error_avg",
+        "value": 6.217303887617241,
+        "badge": "operational"
+      },
+      "monthly": {
+        "metric": "pct_error_avg",
+        "value": 1.8029662005743443,
+        "badge": "operational"
+      },
+      "yearly": {
+        "metric": "pct_error_avg",
+        "value": 0.534642285464083,
+        "badge": "operational"
+      }
+    }
+  }
+]

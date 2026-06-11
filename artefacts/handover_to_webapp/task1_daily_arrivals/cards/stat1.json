@@ -1,0 +1,26 @@
+{
+  "alias": "Stat 1",
+  "family": "Statistical",
+  "task": "task1",
+  "task_label": "Daily Total ED Arrivals",
+  "resolution": "daily",
+  "pickle_filename": "stat1.pkl",
+  "pickle_size_mb": 2.99,
+  "performance": {
+    "val_MAPE": 13.33,
+    "val_RMSE": 10.2,
+    "weekly_avg_pct_error": 6.063855877692175,
+    "monthly_avg_pct_error": 2.2544310160079424,
+    "yearly_avg_pct_error": 0.762049516729717
+  },
+  "badge": "operational",
+  "badge_label": "Operational",
+  "badge_emoji": "🟢",
+  "training_window": "train + val (2022-03-01 to 2024-12-31, 1037 days)",
+  "last_trained_utc": "2026-06-11T18:52:15.082342+00:00",
+  "description": "Alias Stat 1 (Statistical). Steve Biko Hospital ED daily total arrivals forecaster. Operational badge tier: Operational.",
+  "internal_only": {
+    "scientific_name": "ARIMA(p,1,q)",
+    "source_pickle": "artefacts\\models\\deploy\\arima.pkl"
+  }
+}

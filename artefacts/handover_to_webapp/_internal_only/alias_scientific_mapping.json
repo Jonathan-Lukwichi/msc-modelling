@@ -1,0 +1,26 @@
+{
+  "Stat 1": {
+    "scientific_name": "ARIMA(p,1,q)",
+    "thesis_section": "Chapter 5 §5.2.2 + Chapter 6"
+  },
+  "Stat 2": {
+    "scientific_name": "SARIMAX(p,1,q)(P,1,Q)_7",
+    "thesis_section": "Chapter 5 §5.2.2 + Chapter 6"
+  },
+  "ML 1": {
+    "scientific_name": "XGBoost",
+    "thesis_section": "Chapter 6"
+  },
+  "ML 2": {
+    "scientific_name": "ANN (MLP)",
+    "thesis_section": "Chapter 6"
+  },
+  "Hybrid 1": {
+    "scientific_name": "SARIMAX + XGBoost residual refiner",
+    "thesis_section": "Chapter 6"
+  },
+  "Hybrid 2": {
+    "scientific_name": "SARIMAX + LSTM residual refiner",
+    "thesis_section": "Chapter 6"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "alias": "ML 2",
+  "family": "ML",
+  "task": "task2",
+  "specialty": "Gynaecology",
+  "resolution": "daily",
+  "pickle_filename": "ml2.pkl",
+  "pickle_size_mb": 0.0,
+  "performance": {
+    "val_MAPE": 46.33
+  },
+  "badge": "research",
+  "badge_label": "Research preview",
+  "badge_emoji": "🔴",
+  "training_window": "train+val (2022-03-01 to 2024-12-31)",
+  "last_trained_utc": "2026-06-11T20:34:21.162679+00:00",
+  "description": "Alias ML 2 (ML) for Gynaecology. Badge: Research preview.",
+  "internal_only": {
+    "scientific_name": "ANN"
+  }
+}
