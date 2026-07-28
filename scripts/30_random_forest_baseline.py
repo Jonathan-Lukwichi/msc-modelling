@@ -31,6 +31,7 @@ from src.forecasting.consensus import build_selected_X
 from src.forecasting.engineering import load_engineered
 from src.forecasting.metrics import score
 from src.forecasting.rolling import RollingForecaster, FoldPrediction
+from src.forecasting.mlflow_utils import log_run
 
 
 def rf_factory(params: dict, seed: int = 42):
@@ -114,67 +115,74 @@ def main():
 
     best_params = quick_hpo(X, target, splits, target)
 
-    rows = []
-    for block_name, blk_idx in [("val", val_idx), ("test", test_idx)]:
-        print(f"--- Rolling {block_name} forecast ---")
-        t0 = time.time()
-        rf = RollingForecaster(
-            model_factory=rf_factory(best_params),
-            step_days=7, horizon_days=7,
-            min_train_days=365,
+    with log_run("random_forest", params=best_params, family="ml", criterion="rmse") as run:
+        rows = []
+        for block_name, blk_idx in [("val", val_idx), ("test", test_idx)]:
+            print(f"--- Rolling {block_name} forecast ---")
+            t0 = time.time()
+            rf = RollingForecaster(
+                model_factory=rf_factory(best_params),
+                step_days=7, horizon_days=7,
+                min_train_days=365,
+            )
+            out = rf.fit_predict(X=X, y=target, eval_index=blk_idx)
+            out["actual"] = target.loc[out.index].values
+            out = out.rename(columns={"yhat": "predicted"})
+            s = score(out["actual"], out["predicted"])
+            print(f"  {block_name} ({time.time() - t0:.0f}s): MAPE={s['MAPE']:.3f}  "
+                  f"MAE={s['MAE']:.2f}  RMSE={s['RMSE']:.2f}  R2={s['R2']:+.3f}\n")
+            # Save predictions
+            out_path = (ROOT / "artefacts" / "predictions" /
+                          ("test" if block_name == "test" else "") /
+                          "random_forest.csv")
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            save = out.reset_index().rename(columns={"index": "date"})
+            save.to_csv(out_path, index=False)
+            rows.append({"block": block_name,
+                         "MAPE": s["MAPE"], "MAE": s["MAE"],
+                         "RMSE": s["RMSE"], "R2": s["R2"], "n": len(out)})
+            run.log_metrics({
+                f"{block_name}_MAPE": s["MAPE"], f"{block_name}_MAE": s["MAE"],
+                f"{block_name}_RMSE": s["RMSE"], f"{block_name}_R2": s["R2"],
+            })
+
+        # Save metrics
+        m_path = ROOT / "artefacts" / "metrics" / "random_forest_metrics.csv"
+        pd.DataFrame(rows).to_csv(m_path, index=False)
+        print(f"Wrote: {m_path}")
+
+        # Compute MASE against seasonal-naive
+        from src.forecasting.metrics import mase
+        test_pred = pd.read_csv(
+            ROOT / "artefacts" / "predictions" / "test" / "random_forest.csv",
+            parse_dates=["date"],
+        ).set_index("date")
+        train_y = target.loc[train_idx]
+        val_y = target.loc[val_idx]
+        val_pred = pd.read_csv(
+            ROOT / "artefacts" / "predictions" / "random_forest.csv",
+            parse_dates=["date"],
+        ).set_index("date")
+        val_mase = mase(val_y.values, val_pred["predicted"].values, train_y.values, seasonality=7)
+        test_mase = mase(target.loc[test_idx].values, test_pred["predicted"].values,
+                           train_y.values, seasonality=7)
+        print(f"  val_MASE  = {val_mase:.3f}")
+        print(f"  test_MASE = {test_mase:.3f}")
+        run.log_metrics({"val_MASE": val_mase, "test_MASE": test_mase})
+        run.log_artefact(m_path)
+
+        # Append to leaderboard parquet
+        from src.forecasting.leaderboard import append_row
+        val_row = next(r for r in rows if r["block"] == "val")
+        test_row = next(r for r in rows if r["block"] == "test")
+        append_row(
+            parquet_path=ROOT / "artefacts" / "leaderboard_canonical.parquet",
+            model="random_forest", family="ml", criterion="rmse", seed=42,
+            val_metrics={"MAPE": val_row["MAPE"], "RMSE": val_row["RMSE"], "MASE": val_mase},
+            test_metrics={"MAPE": test_row["MAPE"], "RMSE": test_row["RMSE"], "MASE": test_mase},
+            source_csv=str(m_path.relative_to(ROOT)),
         )
-        out = rf.fit_predict(X=X, y=target, eval_index=blk_idx)
-        out["actual"] = target.loc[out.index].values
-        out = out.rename(columns={"yhat": "predicted"})
-        s = score(out["actual"], out["predicted"])
-        print(f"  {block_name} ({time.time() - t0:.0f}s): MAPE={s['MAPE']:.3f}  "
-              f"MAE={s['MAE']:.2f}  RMSE={s['RMSE']:.2f}  R2={s['R2']:+.3f}\n")
-        # Save predictions
-        out_path = (ROOT / "artefacts" / "predictions" /
-                      ("test" if block_name == "test" else "") /
-                      "random_forest.csv")
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        save = out.reset_index().rename(columns={"index": "date"})
-        save.to_csv(out_path, index=False)
-        rows.append({"block": block_name,
-                     "MAPE": s["MAPE"], "MAE": s["MAE"],
-                     "RMSE": s["RMSE"], "R2": s["R2"], "n": len(out)})
-
-    # Save metrics
-    m_path = ROOT / "artefacts" / "metrics" / "random_forest_metrics.csv"
-    pd.DataFrame(rows).to_csv(m_path, index=False)
-    print(f"Wrote: {m_path}")
-
-    # Compute MASE against seasonal-naive
-    from src.forecasting.metrics import mase
-    test_pred = pd.read_csv(
-        ROOT / "artefacts" / "predictions" / "test" / "random_forest.csv",
-        parse_dates=["date"],
-    ).set_index("date")
-    train_y = target.loc[train_idx]
-    val_y = target.loc[val_idx]
-    val_pred = pd.read_csv(
-        ROOT / "artefacts" / "predictions" / "random_forest.csv",
-        parse_dates=["date"],
-    ).set_index("date")
-    val_mase = mase(val_y.values, val_pred["predicted"].values, train_y.values, seasonality=7)
-    test_mase = mase(target.loc[test_idx].values, test_pred["predicted"].values,
-                       train_y.values, seasonality=7)
-    print(f"  val_MASE  = {val_mase:.3f}")
-    print(f"  test_MASE = {test_mase:.3f}")
-
-    # Append to leaderboard parquet
-    from src.forecasting.leaderboard import append_row
-    val_row = next(r for r in rows if r["block"] == "val")
-    test_row = next(r for r in rows if r["block"] == "test")
-    append_row(
-        parquet_path=ROOT / "artefacts" / "leaderboard_canonical.parquet",
-        model="random_forest", family="ml", criterion="rmse", seed=42,
-        val_metrics={"MAPE": val_row["MAPE"], "RMSE": val_row["RMSE"], "MASE": val_mase},
-        test_metrics={"MAPE": test_row["MAPE"], "RMSE": test_row["RMSE"], "MASE": test_mase},
-        source_csv=str(m_path.relative_to(ROOT)),
-    )
-    print(f"Leaderboard updated.")
+        print(f"Leaderboard updated.")
 
 
 if __name__ == "__main__":

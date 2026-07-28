@@ -1,0 +1,46 @@
+schema: '2.0'
+stages:
+  crossval:
+    cmd: "python scripts/27_cross_validate_claims.py > artefacts/reports/crossval_report.txt\n"
+    deps:
+    - path: artefacts/leaderboard_canonical.parquet
+      hash: md5
+      md5: 5c01dacd379a298bacbfc7c1a7db0b4c
+      size: 11040
+    - path: artefacts/metrics/aggregated_metrics_period.csv
+      hash: md5
+      md5: ef8800fdd7e3915d523326a66aaa7852
+      size: 4022
+    - path: artefacts/metrics/augmented_random_search.csv
+      hash: md5
+      md5: 2eb78844ee74d0d331593935bae2e6bc
+      size: 984
+    - path: artefacts/metrics/hpo_comparison.csv
+      hash: md5
+      md5: 1397460c82dd92f48a54603f7569ae83
+      size: 1780
+    - path: artefacts/metrics/task2_standalone_metrics.csv
+      hash: md5
+      md5: 5fc56950d321834367b7abb46dd1b554
+      size: 10579
+    - path: artefacts/metrics/test_per_horizon.csv
+      hash: md5
+      md5: 650927f83a51c67c5c05992b827c23d6
+      size: 1143
+    - path: artefacts/metrics/test_per_quarter.csv
+      hash: md5
+      md5: 8e03f5e3345f8ceb754e1bdf6c9fafec
+      size: 502
+    - path: artefacts/metrics/uq_coverage_aci.csv
+      hash: md5
+      md5: 37950a511992e41fbc6404d94d9b9c83
+      size: 2737
+    - path: scripts/27_cross_validate_claims.py
+      hash: md5
+      md5: 16438a740d51ee6aa212a15920f3c3df
+      size: 15242
+    outs:
+    - path: artefacts/reports/crossval_report.txt
+      hash: md5
+      md5: f734f2e946b83dcc82a9a727069e7997
+      size: 10829

@@ -1,0 +1,52 @@
+# Two services: the pipeline itself, and an MLflow UI to browse
+# experiment runs. Both share the same image and the same mlruns/
+# volume so runs logged by `pipeline` are visible in `mlflow-ui`.
+#
+# Quick start (no raw data needed — verifies the committed artefacts):
+#   docker compose run --rm pipeline python make.py test
+#   docker compose run --rm pipeline python make.py crossval
+#
+# Full pipeline rerun (needs the raw G1-G4 CSVs — see the commented
+# volume mount below and configs/paths.local.yaml):
+#   docker compose run --rm pipeline python make.py pipeline
+#
+# Browse experiment runs logged via MLflow:
+#   docker compose up mlflow-ui
+#   -> open http://localhost:5000
+
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: msc-modelling:latest
+    volumes:
+      # Outputs persist on the host across container runs.
+      - ./artefacts:/app/artefacts
+      - ./mlruns:/app/mlruns
+      # `make.py test` and `make.py crossval` need NEITHER of the two
+      # mounts below — they only touch the artefacts already committed
+      # to the repo. Only uncomment these for `make.py verify` or
+      # `make.py pipeline`, which need the raw G1-G4 CSVs:
+      #   1. cp configs/paths.yaml configs/paths.local.yaml   (on the host)
+      #   2. edit configs/paths.local.yaml to point at the mounted path below
+      #   3. uncomment both mounts
+      # - ./configs/paths.local.yaml:/app/configs/paths.local.yaml:ro
+      # - ../dataAnalysis:/dataAnalysis:ro
+    environment:
+      - PYTHONIOENCODING=utf-8
+      - MLFLOW_TRACKING_URI=file:/app/mlruns
+    working_dir: /app
+
+  mlflow-ui:
+    image: msc-modelling:latest
+    depends_on:
+      - pipeline
+    volumes:
+      - ./mlruns:/app/mlruns
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=file:/app/mlruns
+    entrypoint: ["python", "-m", "mlflow", "ui", "--host", "0.0.0.0", "--port", "5000",
+                  "--backend-store-uri", "file:/app/mlruns"]

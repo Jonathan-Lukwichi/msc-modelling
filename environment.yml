@@ -1,0 +1,37 @@
+# Conda environment spec, mirroring requirements-core.txt.
+#
+# Create:  conda env create -f environment.yml
+# Update:  conda env update -f environment.yml --prune
+# Activate: conda activate msc-modelling
+#
+# This is the Anaconda-3.13 environment the thesis's numeric results
+# were produced in (see chap6 sec 6.2.5, Software environment).
+name: msc-modelling
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.13
+  - numpy>=2.0
+  - pandas>=2.0
+  - pyarrow>=15
+  - scikit-learn>=1.5
+  - statsmodels>=0.14
+  - xgboost>=2.0
+  - matplotlib
+  - seaborn
+  - joblib
+  - tqdm
+  - pyyaml
+  - scipy>=1.13
+  - pip
+  - pip:
+      - pmdarima>=2.0
+      - optuna>=3.5
+      - shap
+      - pytest
+      - torch>=2.2
+      - mapie>=0.8
+      - cvxopt>=1.3
+      - densratio>=0.3
+      - PyPDF2>=3.0

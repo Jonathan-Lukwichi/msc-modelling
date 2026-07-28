@@ -9,16 +9,29 @@ from src.forecasting.io import load_g1, Splits
 from src.forecasting.features import (
     build_task1_exogenous, build_task2_exogenous, StandardScaler,
 )
+from conftest import REAL_DATA_AVAILABLE
 
 
 @pytest.fixture(scope="module")
 def train_df():
+    if not REAL_DATA_AVAILABLE:
+        pytest.skip(
+            "Requires the raw G1-G4 hospital CSVs referenced by "
+            "configs/paths.local.yaml; not available in this environment. "
+            "See README 'Data access'."
+        )
     splits = Splits.from_config()
     return splits.slice(load_g1(), "train")
 
 
 @pytest.fixture(scope="module")
 def val_df():
+    if not REAL_DATA_AVAILABLE:
+        pytest.skip(
+            "Requires the raw G1-G4 hospital CSVs referenced by "
+            "configs/paths.local.yaml; not available in this environment. "
+            "See README 'Data access'."
+        )
     splits = Splits.from_config()
     return splits.slice(load_g1(), "val")
 

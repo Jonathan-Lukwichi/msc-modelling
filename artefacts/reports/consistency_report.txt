@@ -1,0 +1,51 @@
+============================================================
+Pass A -- latex code/ lint
+============================================================
+  [FAIL] chap6.tex: braces 380/380, cites 14/0 missing, refs 36 (1 unresolved)
+        UNRESOLVED REF -> app:ch6_supplementary
+  [FAIL] chap7.tex: braces 321/321, cites 25/0 missing, refs 25 (1 unresolved)
+        UNRESOLVED REF -> app:anylogic
+  [PASS] chap8.tex: braces 83/83, cites 12/0 missing, refs 13 (0 unresolved)
+
+============================================================
+Pass B -- latex-disertation/ lint
+============================================================
+  [PASS] chap6.tex: braces 668/668, cites 39/0 missing, refs 53 (0 unresolved)
+  [PASS] chap7.tex: braces 255/255, cites 4/0 missing, refs 21 (0 unresolved)
+  [PASS] chap8.tex: braces 134/134, cites 20/0 missing, refs 17 (0 unresolved)
+
+============================================================
+Pass C -- chap6.tex numbers vs parquet + CSVs (independent reader)
+============================================================
+  [PASS] XGBoost val MAPE 11.99: in chap6 text = True, data = 11.990513633956857, delta = 0.0005136339568565518
+  [PASS] XGBoost test MAPE 12.63: in chap6 text = True, data = 12.63287075621472, delta = 0.0028707562147189947
+  [FAIL] XGBoost test MASE 0.724: in chap6 text = False, data = 0.7243784703549261, delta = 0.00037847035492610814
+  [PASS] SARIMAX test MAPE 13.11: in chap6 text = True, data = 13.105268783422177, delta = -0.0047312165778219395
+  [PASS] Hybrid SARIMAX+LSTM val MAPE 12.19: in chap6 text = True, data = 12.190614595436324, delta = 0.0006145954363248052
+
+  -- HPO audit cells in chap6 Table 6.2 --
+  [PASS] XGBoost Grid cv_RMSE = 7.066 in chap6 text? True
+  [PASS] XGBoost Random cv_RMSE = 7.129 in chap6 text? True
+  [PASS] XGBoost Optuna cv_RMSE = 7.102 in chap6 text? True
+  [PASS] ANN Grid cv_RMSE = 7.320 in chap6 text? True
+  [PASS] ANN Random cv_RMSE = 6.992 in chap6 text? True
+  [PASS] ANN Optuna cv_RMSE = 7.144 in chap6 text? True
+  [PASS] LSTM Grid cv_RMSE = 7.592 in chap6 text? True
+  [PASS] LSTM Random cv_RMSE = 7.836 in chap6 text? True
+  [PASS] LSTM Optuna cv_RMSE = 7.532 in chap6 text? True
+
+  -- Drift-aware cells (chap6 Table 6.7) --
+  [PASS] dow_mean expanding = 20.53 in chap6? True
+  [FAIL] dow_mean sliding_450 = 14.68 in chap6? False
+  [PASS] sarimax expanding = 13.11 in chap6? True
+  [PASS] sarimax sliding_450 = 13.39 in chap6? True
+  [FAIL] xgboost expanding = 14.40 in chap6? False
+  [FAIL] xgboost sliding_450 = 14.24 in chap6? False
+
+============================================================
+Consistency audit summary
+============================================================
+  Pass A (latex code/ lint):     1 PASS / 2 FAIL
+  Pass B (latex-disertation/):   3 PASS / 0 FAIL
+  Pass C (numbers vs data):      16 PASS / 4 FAIL
+  Combined:                      20 PASS / 6 FAIL

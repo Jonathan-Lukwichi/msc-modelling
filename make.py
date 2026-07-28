@@ -2,11 +2,20 @@
 
 A non-developer can reproduce every numeric claim with these commands:
 
-    python make.py setup     # install dependencies (one-time)
+    python make.py setup     # install core dependencies (one-time, fast)
     python make.py verify    # confirm the data plumbing works
     python make.py test      # run the unit-test suite (50 tests)
     python make.py crossval  # cross-validate every numeric claim
     python make.py pipeline  # full modelling pipeline (~6-10 hours)
+
+Reproducibility platform commands (see README "Reproducibility
+platform" section for the full picture and its honest limits):
+
+    python make.py docker-build     # build the Docker image
+    python make.py docker-crossval  # run crossval INSIDE the container
+    python make.py dvc-dag          # print the DVC pipeline graph
+    python make.py dvc-repro        # re-run any stale DVC stage
+    python make.py mlflow-ui        # browse logged experiment runs
 
 Run `python make.py help` for the full list.
 
@@ -40,10 +49,17 @@ def _sh(cmd: list[str], cwd: Path = ROOT, allow_fail: bool = False) -> int:
 
 
 def cmd_setup():
-    """Install dependencies from requirements.txt."""
-    print("Installing project dependencies. Heavy ones (gluonts, dvc) "
-          "are optional -- install them only when you need DeepAR / DVC tracking.")
-    _sh([PY, "-m", "pip", "install", "-r", "requirements.txt"])
+    """Install CORE dependencies only (requirements-core.txt) -- fast."""
+    print("Installing core dependencies (pipeline + tests + crossval).")
+    print("For the reproducibility platform stack (DVC/MLflow/Hydra) or the "
+          "Nixtla/DeepAR extras, run: python make.py setup-full")
+    _sh([PY, "-m", "pip", "install", "-r", "requirements-core.txt"])
+
+
+def cmd_setup_full():
+    """Install core + optional dependencies (DVC, MLflow, Hydra, Nixtla, DeepAR)."""
+    _sh([PY, "-m", "pip", "install", "-r", "requirements-core.txt"])
+    _sh([PY, "-m", "pip", "install", "-r", "requirements-optional.txt"])
 
 
 def cmd_verify():
@@ -129,6 +145,57 @@ def cmd_pipeline():
             print(f"  WARNING: {script} returned {rc}; continuing.")
 
 
+def cmd_docker_build():
+    """Build the Docker image (Dockerfile -> msc-modelling:latest)."""
+    _sh(["docker", "build", "-t", "msc-modelling:latest", "."])
+
+
+def cmd_docker_test():
+    """Run the unit-test suite INSIDE a container (no host Python needed)."""
+    _sh(["docker", "compose", "run", "--rm", "pipeline", "python", "make.py", "test"])
+
+
+def cmd_docker_crossval():
+    """Run the cross-validation audit INSIDE a container (no host Python needed)."""
+    _sh(["docker", "compose", "run", "--rm", "pipeline", "python", "make.py", "crossval"])
+
+
+def cmd_dvc_dag():
+    """Print the DVC pipeline dependency graph (crossval + consistency_audit).
+
+    See dvc.yaml's header comment for why the 31 model-training scripts
+    are NOT part of this DAG (they need confidential raw data that can't
+    be committed) and why scripts/28_fill_gaps.py is also excluded (it
+    patches an existing file in place, which conflicts with DVC's
+    clear-outputs-then-regenerate stage contract).
+    """
+    _sh([PY, "-m", "dvc", "dag"])
+
+
+def cmd_dvc_repro():
+    """Re-run any DVC stage whose dependencies have changed since the last run."""
+    _sh([PY, "-m", "dvc", "repro"])
+
+
+def cmd_dvc_status():
+    """Show which DVC stages are stale without running them."""
+    _sh([PY, "-m", "dvc", "status"], allow_fail=True)
+
+
+def cmd_mlflow_ui():
+    """Open the MLflow experiment-tracking UI (http://localhost:5000).
+
+    Reads from ./mlruns, populated by scripts that call
+    src.forecasting.mlflow_utils.log_run() (currently: scripts/30). Runs
+    logged before this wrapper existed are not in mlruns/ -- MLflow only
+    tracks what was logged at run time; historical runs weren't
+    retroactively backfilled since that would mean re-running expensive
+    (hours-long) training scripts just to produce tracking metadata.
+    """
+    _sh([PY, "-m", "mlflow", "ui", "--backend-store-uri",
+          f"file:{(ROOT / 'mlruns').as_posix()}"])
+
+
 def cmd_clean():
     """Remove generated artefacts (cautious: keeps committed files only)."""
     print("Removing test cache, pyc files. Run-output CSVs in "
@@ -145,14 +212,22 @@ def cmd_clean():
 
 
 COMMANDS = {
-    "setup":       cmd_setup,
-    "verify":      cmd_verify,
-    "test":        cmd_test,
-    "crossval":    cmd_crossval,
-    "fill-gaps":   cmd_fill_gaps,
-    "leaderboard": cmd_leaderboard,
-    "pipeline":    cmd_pipeline,
-    "clean":       cmd_clean,
+    "setup":            cmd_setup,
+    "setup-full":       cmd_setup_full,
+    "verify":           cmd_verify,
+    "test":             cmd_test,
+    "crossval":         cmd_crossval,
+    "fill-gaps":        cmd_fill_gaps,
+    "leaderboard":      cmd_leaderboard,
+    "pipeline":         cmd_pipeline,
+    "docker-build":     cmd_docker_build,
+    "docker-test":      cmd_docker_test,
+    "docker-crossval":  cmd_docker_crossval,
+    "dvc-dag":          cmd_dvc_dag,
+    "dvc-repro":        cmd_dvc_repro,
+    "dvc-status":       cmd_dvc_status,
+    "mlflow-ui":        cmd_mlflow_ui,
+    "clean":            cmd_clean,
 }
 
 

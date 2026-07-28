@@ -48,3 +48,18 @@ artefacts/predictions/
 # Background task outputs / temp files
 *.log
 *.tmp
+
+# -- Reproducibility platform --
+# MLflow's local run history. Each contributor/CI run accumulates its
+# own mlruns/ locally (or points MLFLOW_TRACKING_URI at a shared
+# server); this is generated state, not source, and grows without
+# bound, so it isn't committed. What IS committed is the code that
+# produces it (src/forecasting/mlflow_utils.py) and, permanently, the
+# metrics it logged (they also land in artefacts/metrics/*.csv and the
+# leaderboard parquet via the normal script output path).
+mlruns/
+
+# DVC's local cache of tracked file content (separate from dvc.lock and
+# the .dvc/config, which ARE committed).
+/.dvc/cache/
+/.dvc/tmp/

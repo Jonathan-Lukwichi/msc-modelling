@@ -7,6 +7,7 @@ import pytest
 from src.forecasting.io import (
     Splits, load_g1, load_g3, load_split_config, verify_split_sizes,
 )
+from conftest import requires_real_data
 
 
 def test_splits_dates_match_chapter5():
@@ -20,6 +21,7 @@ def test_splits_dates_match_chapter5():
     assert s.test_end == pd.Timestamp("2026-01-31")
 
 
+@requires_real_data
 def test_g1_load_and_filter():
     """G1 loads, has total_daily_arrivals, and zero-day filter drops 17 rows (§4.4.1)."""
     g1_all = load_g1(filter_zero_days=False)
@@ -31,6 +33,7 @@ def test_g1_load_and_filter():
     assert dropped == 17, f"Expected 17 zero days dropped, got {dropped}"
 
 
+@requires_real_data
 def test_g1_split_counts_match_calendar_window():
     """val=184 and test=396 should hold post-filter (no zero days in those blocks).
     train may differ from 853 by however many zero days fall in that window."""
@@ -41,6 +44,7 @@ def test_g1_split_counts_match_calendar_window():
     assert 840 <= counts["train"] <= 853
 
 
+@requires_real_data
 def test_g3_loads_with_specialty_columns():
     """G3 should expose per-specialty count columns."""
     g3 = load_g3()

@@ -1,0 +1,182 @@
+
+======================================================================
+1. Final leaderboard claims (chap6 Tab 6.6) vs parquet
+======================================================================
+Loaded 25 leaderboard rows (10 under RMSE criterion).
+  [PASS] XGBoost val MAPE: claim=11.99   actual=11.991  Δ=-0.001
+  [PASS] XGBoost test MAPE: claim=12.63   actual=12.633  Δ=-0.003
+  [PASS] XGBoost val RMSE: claim=9.35   actual=9.350  Δ=+0.000
+  [PASS] XGBoost test RMSE: claim=10.3   actual=10.302  Δ=-0.002
+  [PASS] SARIMAX val MAPE: claim=12.52   actual=12.525  Δ=-0.005
+  [PASS] SARIMAX test MAPE: claim=13.11   actual=13.105  Δ=+0.005
+  [PASS] ANN val MAPE (RMSE-tuned): claim=11.9   actual=11.897  Δ=+0.003
+  [PASS] ANN test MAPE (RMSE-tuned): claim=13.24   actual=13.235  Δ=+0.005
+  [PASS] LSTM val MAPE (RMSE-tuned): claim=12.31   actual=12.310  Δ=-0.000
+  [PASS] LSTM test MAPE (RMSE-tuned): claim=13.76   actual=13.759  Δ=+0.001
+  [PASS] ARIMA val MAPE: claim=13.33   actual=13.326  Δ=+0.004
+  [PASS] NB-GLM val MAPE: claim=12.65   actual=12.647  Δ=+0.003
+  [PASS] Hybrid SARIMAX+LSTM val MAPE: claim=12.19   actual=12.191  Δ=-0.001
+  [PASS] Hybrid SARIMAX+LSTM test MAPE: claim=12.95   actual=12.947  Δ=+0.003
+
+MASE column (test_mase) check -- corrected chap6 values vs computed parquet:
+  [PASS] XGBoost test MASE: claim=0.724   actual=0.724  Δ=-0.000
+  [PASS] SARIMAX test MASE: claim=0.732   actual=0.732  Δ=+0.000
+  [PASS] Hybrid SARIMAX+LSTM test MASE: claim=0.738   actual=0.738  Δ=-0.000
+
+======================================================================
+2. ACI claims (chap6 Tab 6.4) vs uq_coverage_aci.csv
+======================================================================
+Loaded 15 rows at the 95% level.
+  [PASS] XGBoost split / coverage: claim=0.924   actual=0.924  Δ=-0.000
+  [PASS] XGBoost split / mean width: claim=36.13   actual=36.128  Δ=+0.002
+  [PASS] XGBoost split / Winkler: claim=48.31   actual=48.310  Δ=-0.000
+  [PASS] XGBoost ACI 0.005 / coverage: claim=0.942   actual=0.942  Δ=+0.000
+  [PASS] XGBoost ACI 0.005 / mean width: claim=38.79   actual=38.792  Δ=-0.002
+  [PASS] XGBoost ACI 0.005 / Winkler: claim=48.02   actual=48.023  Δ=-0.003
+  [PASS] SARIMAX split / coverage: claim=0.922   actual=0.922  Δ=+0.000
+  [PASS] SARIMAX split / Winkler: claim=50.7   actual=50.698  Δ=+0.002
+  [PASS] SARIMAX ACI 0.005 / coverage: claim=0.942   actual=0.942  Δ=+0.000
+  [PASS] SARIMAX ACI 0.005 / Winkler: claim=50.44   actual=50.442  Δ=-0.002
+  [PASS] Hybrid split / coverage: claim=0.914   actual=0.914  Δ=-0.000
+  [PASS] Hybrid split / Winkler: claim=50.81   actual=50.813  Δ=-0.003
+  [PASS] Hybrid ACI 0.001 / coverage: claim=0.927   actual=0.927  Δ=+0.000
+  [PASS] Hybrid ACI 0.001 / Winkler: claim=50.36   actual=50.356  Δ=+0.004
+
+======================================================================
+3. Task 2 specialty test MAPE (chap8 + RESULTS Sec 6quater)
+======================================================================
+Loaded 60 rows.
+  [PASS] Medicine XGBoost test MAPE: claim=18.86   actual=18.863  Δ=-0.003
+  [PASS] Orthopaedics ARIMA test MAPE: claim=82.18   actual=82.175  Δ=+0.005
+  [PASS] Surgery NB-GLM test MAPE: claim=55.28   actual=55.278  Δ=+0.002
+  [PASS] Paediatrics NB-GLM test MAPE: claim=48.58   actual=48.579  Δ=+0.001
+  [PASS] Gynaecology NB-GLM test MAPE: claim=45.1   actual=45.097  Δ=+0.003
+
+======================================================================
+4. Aggregated weekly/monthly MAPE (chap7)
+======================================================================
+Loaded 40 rows.
+     model block  period  n_periods     MAPE       MAE       RMSE        R2
+Naive_yest   val  weekly         26 1.997148  8.423077  10.192380  0.857422
+Naive_yest   val monthly          6 0.593025 11.000000  13.650397  0.856792
+Naive_yest  test  weekly         55 2.247376 10.509091  13.333485  0.916965
+Naive_yest  test monthly         13 0.780796 16.076923  19.012142  0.980182
+Naive_yest  test  yearly          2 0.218941 11.500000  12.020815  0.999999
+     ARIMA   val  weekly         26 5.826577 24.370874  30.128308 -0.245806
+     ARIMA   val monthly          6 2.231468 41.163301  49.852696 -0.910089
+     ARIMA  test  weekly         55 7.133496 32.476709  43.995445  0.095952
+     ARIMA  test monthly         13 3.926985 82.137832  95.766321  0.497175
+     ARIMA  test  yearly          2 1.362713 49.935721  50.081267  0.999981
+   SARIMAX   val  weekly         26 6.085435 25.240965  29.892303 -0.226364
+   SARIMAX   val monthly          6 2.197857 40.262733  52.060015 -1.082979
+   SARIMAX  test  weekly         55 7.358933 33.690797  43.139383  0.130792
+   SARIMAX  test monthly         13 4.237325 88.614427 102.776794  0.420863
+   SARIMAX  test  yearly          2 2.584013 61.319259  77.082715  0.999956
+  [PASS] XGBoost weekly test MAPE (chap7): claim=5.89   actual=5.890  Δ=+0.000
+  [PASS] XGBoost monthly test MAPE (chap7): claim=3.47   actual=3.474  Δ=-0.004
+
+======================================================================
+5. Per-quarter SARIMAX test MAPE (chap6 Tab 6.7)
+======================================================================
+  model quarter  n      MAPE      MAE      RMSE       R2
+sarimax  2025Q1 90 12.728845 8.028602 10.307257 0.129286
+sarimax  2025Q2 91 12.703451 8.173545  9.817990 0.267477
+sarimax  2025Q3 92 13.562849 7.971437 10.395015 0.297250
+sarimax  2025Q4 92 13.895548 9.402444 11.241700 0.161254
+sarimax  2026Q1 31 11.674316 7.887295  9.814246 0.253308
+  [PASS] SARIMAX 2025Q1: claim=12.73   actual=12.729  Δ=+0.001
+  [PASS] SARIMAX 2025Q2: claim=12.7   actual=12.703  Δ=-0.003
+  [PASS] SARIMAX 2025Q3: claim=13.56   actual=13.563  Δ=-0.003
+  [PASS] SARIMAX 2025Q4: claim=13.9   actual=13.896  Δ=+0.004
+  [PASS] SARIMAX 2026Q1: claim=11.67   actual=11.674  Δ=-0.004
+
+======================================================================
+6. Per-horizon recursive XGBoost test MAPE (chap6 Tab 6.3)
+======================================================================
+  model  horizon  n      MAPE      MAE      RMSE        R2
+sarimax        1 57 13.306380 8.961052 10.833021  0.208146
+sarimax        2 57 14.056539 8.977808 11.067064  0.016361
+sarimax        3 57 13.549295 8.063451 10.857009  0.134160
+sarimax        4 57 14.767272 7.998444 10.336582  0.050775
+sarimax        5 56 14.490389 8.496001 10.081590  0.062965
+sarimax        6 56 10.586796 8.048119  9.931257  0.087534
+sarimax        7 56 10.922026 7.942075  9.629183 -0.303643
+xgboost        1 57 13.804957 9.444411 11.546072       NaN
+xgboost        2 57 12.305580 8.152802 10.123044       NaN
+xgboost        3 57 13.414010 8.111804 10.802992       NaN
+xgboost        4 57 14.285646 7.754835  9.963204       NaN
+xgboost        5 56 12.022562 7.182040  8.833986       NaN
+xgboost        6 56 11.378430 8.940991 10.687289       NaN
+xgboost        7 56 11.160362 8.324091  9.917797       NaN
+  [PASS] h=1: claim=13.8   actual=13.805  Δ=-0.005
+  [PASS] h=2: claim=12.31   actual=12.306  Δ=+0.004
+  [PASS] h=3: claim=13.41   actual=13.414  Δ=-0.004
+  [PASS] h=4: claim=14.29   actual=14.286  Δ=+0.004
+  [PASS] h=5: claim=12.02   actual=12.023  Δ=-0.003
+  [PASS] h=6: claim=11.38   actual=11.378  Δ=+0.002
+  [PASS] h=7: claim=11.16   actual=11.160  Δ=-0.000
+
+======================================================================
+7. HPO fairness audit (chap6 Tab 6.2)
+======================================================================
+  model method  best_cv_RMSE  best_cv_MAPE  time_min
+XGBoost   Grid      7.065947      9.166325      0.87
+XGBoost Random      7.128723      8.831648      1.19
+XGBoost Optuna      7.101800      9.168802      1.14
+    ANN   Grid      7.319933      9.871351      1.19
+    ANN Random      6.992050      9.231229      1.13
+    ANN Optuna      7.143565      9.844885      0.88
+   LSTM   Grid      7.592084      9.708047      2.31
+   LSTM Random      7.836287     11.114139      2.18
+   LSTM Optuna      7.532105      9.588481      2.71
+  [PASS] XGBoost Grid cv_RMSE: claim=7.066   actual=7.066  Δ=+0.000
+  [PASS] XGBoost Grid cv_MAPE: claim=9.166   actual=9.166  Δ=-0.000
+  [PASS] XGBoost Random cv_RMSE: claim=7.129   actual=7.129  Δ=+0.000
+  [PASS] XGBoost Random cv_MAPE: claim=8.832   actual=8.832  Δ=+0.000
+  [PASS] XGBoost Optuna cv_RMSE: claim=7.102   actual=7.102  Δ=+0.000
+  [PASS] XGBoost Optuna cv_MAPE: claim=9.169   actual=9.169  Δ=+0.000
+  [PASS] ANN Grid cv_RMSE: claim=7.32   actual=7.320  Δ=+0.000
+  [PASS] ANN Random cv_RMSE: claim=6.992   actual=6.992  Δ=-0.000
+  [PASS] ANN Random cv_MAPE: claim=9.231   actual=9.231  Δ=-0.000
+  [PASS] ANN Optuna cv_RMSE: claim=7.144   actual=7.144  Δ=+0.000
+  [PASS] LSTM Grid cv_RMSE: claim=7.592   actual=7.592  Δ=-0.000
+  [PASS] LSTM Random cv_RMSE: claim=7.836   actual=7.836  Δ=-0.000
+  [PASS] LSTM Optuna cv_RMSE: claim=7.532   actual=7.532  Δ=-0.000
+  [PASS] LSTM Optuna cv_MAPE: claim=9.588   actual=9.588  Δ=-0.000
+
+Rule A verdicts (per-model best cv_RMSE):
+  model method  best_cv_RMSE
+    ANN Random      6.992050
+   LSTM Optuna      7.532105
+XGBoost   Grid      7.065947
+
+Rule B verdict (lowest worst-case cv_RMSE across models): Optuna at 7.532
+  [PASS] Rule A XGBoost optimizer: claim=Grid  actual=Grid
+  [PASS] Rule A ANN optimizer: claim=Random  actual=Random
+  [PASS] Rule A LSTM optimizer: claim=Optuna  actual=Optuna
+  [PASS] Rule B project-wide optimizer: claim=Optuna  actual=Optuna
+
+======================================================================
+8. Augmented features run (RESULTS Sec 6ter)
+======================================================================
+  model   cv_MAPE  val_MAPE  test_MAPE  val_RMSE  test_RMSE
+XGBoost 10.391243 12.221485  13.008363  9.475761  10.672404
+    ANN  9.764050 12.033209  14.730980  9.496588  12.804622
+   LSTM 11.712689 12.747970  14.926773  9.979632  12.315815
+  [PASS] Augmented XGBoost val MAPE: claim=12.22   actual=12.221  Δ=-0.001
+  [PASS] Augmented XGBoost test MAPE: claim=13.01   actual=13.008  Δ=+0.002
+  [PASS] Augmented ANN val MAPE: claim=12.03   actual=12.033  Δ=-0.003
+  [PASS] Augmented ANN test MAPE: claim=14.73   actual=14.731  Δ=-0.001
+  [PASS] Augmented ANN cv_MAPE (sub-10% claim): claim=9.76   actual=9.764  Δ=-0.004
+  [PASS] Augmented LSTM val MAPE: claim=12.75   actual=12.748  Δ=+0.002
+  [PASS] Augmented LSTM test MAPE: claim=14.93   actual=14.927  Δ=+0.003
+
+======================================================================
+Summary
+======================================================================
+  Passes:   75
+  Fails:    0
+  Warnings: 0
+  Total:    75
+
+All numeric claims within tolerance.

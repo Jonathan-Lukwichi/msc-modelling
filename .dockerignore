@@ -1,0 +1,22 @@
+# Keep the Docker build context small and avoid leaking host-local paths.
+.git/
+.github/
+.claude/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local-machine-specific config (absolute paths to the sibling
+# dataAnalysis repo) — mount this at runtime instead, see docker-compose.yml.
+configs/paths.local.yaml
+
+# Not needed inside the image; generated locally / mounted as a volume.
+mlruns/
+.dvc/cache/
+notebooks/.ipynb_checkpoints/
+
+# Editor cruft
+*.swp
+*~

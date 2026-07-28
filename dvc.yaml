@@ -1,0 +1,82 @@
+# DVC pipeline for the parts of the modelling repo that are reproducible
+# from a bare `git clone` alone, with no external inputs.
+#
+# SCOPE, STATED HONESTLY, PART 1: the 31 model-training scripts (01-31)
+# are NOT expressed as DVC stages here, because scripts 01-08/22-26/30
+# read the raw G1-G4 hospital arrival CSVs, which live outside this
+# repo at a machine-specific absolute path (configs/paths.local.yaml)
+# and can never be committed to Git or DVC -- the data is confidential
+# (see README "Data access"). Encoding those scripts as `dvc.yaml`
+# stages would create a DAG that looks reproducible in the abstract but
+# that `dvc repro` could never actually execute on a teammate's machine
+# or in CI, which is a worse failure mode than not having the DAG.
+#
+# SCOPE, STATED HONESTLY, PART 2: `scripts/28_fill_gaps.py` (the "make.py
+# fill-gaps" command) is ALSO deliberately excluded from this DAG, for a
+# different reason -- it was tried and reverted. That script reads the
+# EXISTING leaderboard_canonical.parquet, patches in a few missing
+# columns (MASE, per-horizon MAPE), and writes it back to the SAME path.
+# DVC's `outs:` contract clears declared outputs before running a
+# stage's `cmd:`, on the assumption that a stage regenerates its outputs
+# from scratch. That assumption doesn't hold for an in-place patch
+# script: the first `dvc repro` on this repo deleted the leaderboard
+# parquet before scripts/28 could run, since the parquet no longer
+# existed for it to read and patch. The file was restored from git
+# immediately; no result in the thesis was affected, and the lesson is
+# recorded here instead of silently re-attempted. `python scripts/
+# 28_fill_gaps.py` (via `python make.py fill-gaps`) remains the correct
+# way to run it -- as a manual, stateful operation, not a DAG stage.
+#
+# What IS encoded below are the two audit stages that verify the
+# thesis's numeric claims against the artefacts already committed to
+# the repo. Both are genuinely reproducible from a clean clone with no
+# raw data, no LaTeX checkout, and no network access, and both are
+# pure regenerate-from-inputs operations (no in-place mutation):
+#
+#   dvc repro          # re-run any stage whose deps changed
+#   dvc dag             # print the (small, honest) dependency graph
+#   dvc status          # see what's stale before committing new numbers
+
+stages:
+  crossval:
+    desc: >
+      Cross-validate every numeric claim in chap6/7/8.tex against the
+      committed artefacts. Fully reproducible from a bare clone: every
+      dep below is tracked in git, none require the raw hospital data.
+    cmd: >
+      python scripts/27_cross_validate_claims.py
+      > artefacts/reports/crossval_report.txt
+    deps:
+      - scripts/27_cross_validate_claims.py
+      - artefacts/leaderboard_canonical.parquet
+      - artefacts/metrics/aggregated_metrics_period.csv
+      - artefacts/metrics/augmented_random_search.csv
+      - artefacts/metrics/hpo_comparison.csv
+      - artefacts/metrics/task2_standalone_metrics.csv
+      - artefacts/metrics/test_per_horizon.csv
+      - artefacts/metrics/test_per_quarter.csv
+      - artefacts/metrics/uq_coverage_aci.csv
+    outs:
+      - artefacts/reports/crossval_report.txt:
+          cache: false   # stays a plain, git-diffable file; not moved into the DVC cache
+
+  consistency_audit:
+    desc: >
+      Independent second-reader audit (does not share code with
+      scripts/27): re-extracts numbers from the artefacts and the HPO /
+      drift-aware CSVs and checks them directly, catching drift that a
+      shared bug in scripts/27 might hide. The chap6/7/8.tex lint
+      passes (A and B) are skipped gracefully on any machine without a
+      local LaTeX checkout (see scripts/29's module docstring); this
+      stage still runs and is still useful without them.
+    cmd: >
+      python scripts/29_consistency_audit.py
+      > artefacts/reports/consistency_report.txt
+    deps:
+      - scripts/29_consistency_audit.py
+      - artefacts/leaderboard_canonical.parquet
+      - artefacts/metrics/hpo_comparison.csv
+      - artefacts/metrics/drift_aware_comparison.csv
+    outs:
+      - artefacts/reports/consistency_report.txt:
+          cache: false
